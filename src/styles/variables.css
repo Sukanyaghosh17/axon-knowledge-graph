@@ -1,0 +1,61 @@
+/* ============================================================
+   AXON — CSS Design System
+   Uses CSS custom properties for theming via data-theme attr
+   ============================================================ */
+
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Light Mode (default) ────────────────────────────────── */
+:root {
+  --bg:              #F0F7EE;
+  --surface:         #FFFFFF;
+  --surface-2:       #F7FAF9;
+  --text-primary:    #1A1A1A;
+  --text-secondary:  #776871;
+  --text-muted:      #91A8A4;
+  --accent:          #5E81AC;
+  --accent-soft:     #AFDEDC;
+  --highlight:       #C4D7F2;
+  --border:          #E6ECEA;
+  --danger:          #E06C75;
+  --success:         #A3BE8C;
+  --warning:         #EBCB8B;
+
+  --shadow-sm:       0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:       0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:       0 10px 30px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
+
+  --radius-sm:       6px;
+  --radius-md:       10px;
+  --radius-lg:       14px;
+  --radius-full:     9999px;
+
+  --transition:      0.2s ease;
+  --font-sans:       'Inter', system-ui, sans-serif;
+  --font-mono:       'JetBrains Mono', 'Fira Code', monospace;
+
+  --sidebar-width:   280px;
+  --navbar-height:   56px;
+}
+
+/* ── Dark Mode (Nord inspired) ───────────────────────────── */
+[data-theme="dark"] {
+  --bg:              #2E3440;
+  --surface:         #3B4252;
+  --surface-2:       #434C5E;
+  --text-primary:    #ECEFF4;
+  --text-secondary:  #D8DEE9;
+  --text-muted:      #91A8A4;
+  --accent:          #88C0D0;
+  --accent-soft:     #AFDEDC;
+  --highlight:       #81A1C1;
+  --border:          #4C566A;
+  --danger:          #BF616A;
+  --success:         #A3BE8C;
+  --warning:         #EBCB8B;
+
+  --shadow-sm:       0 1px 3px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md:       0 4px 12px rgba(0,0,0,0.30), 0 2px 4px rgba(0,0,0,0.15);
+  --shadow-lg:       0 10px 30px rgba(0,0,0,0.35), 0 4px 8px rgba(0,0,0,0.15);
+}
