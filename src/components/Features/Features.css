@@ -1,0 +1,219 @@
+/* Features.css */
+
+.features-section {
+  padding: 8rem 4rem;
+  background-color: transparent;
+  position: relative;
+}
+
+.features-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rem;
+  position: relative;
+  gap: 4rem;
+}
+
+.feature-row.row-reverse {
+  flex-direction: row-reverse;
+}
+
+/* Zig-zag Connector Lines */
+.connector {
+  position: absolute;
+  top: 50%;
+  width: 50%;
+  height: 100%;
+  border: 2px dashed rgba(249, 115, 22, 0.25);
+  z-index: 0;
+}
+
+.connector-right {
+  right: 50%;
+  border-left: none;
+  border-top: none;
+  border-bottom-right-radius: 60px;
+}
+
+.connector-left {
+  left: 50%;
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 60px;
+}
+
+
+/* Text Content */
+.feature-text-wrapper {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+  z-index: 10;
+}
+
+.feature-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--highlight);
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.feature-title {
+  font-size: 2.2rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.feature-desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.feature-btn {
+  display: inline-block;
+  background-color: var(--accent);
+  color: white;
+  padding: 0.6rem 1.6rem;
+  border-radius: 99px;
+  text-decoration: none;
+  font-weight: 500;
+  border: 1.5px solid var(--text-primary);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.feature-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px rgba(28, 25, 23, 0.2);
+}
+
+/* Glassmorphism Cards */
+.feature-card-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.feature-card-glass {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.3) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(28, 25, 23, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  padding: 24px;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+  z-index: 10;
+  position: relative;
+}
+
+.feature-card-glass:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 30px 60px rgba(249, 115, 22, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.feature-card-float {
+  position: absolute;
+  bottom: -20px;
+  right: 10px;
+  width: 100px;
+  height: 100px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-soft) 100%);
+  opacity: 0.1;
+  z-index: 1;
+  filter: blur(10px);
+  transition: opacity 0.3s;
+}
+
+.feature-row:hover .feature-card-float {
+  opacity: 0.25;
+}
+
+.row-reverse .feature-card-float {
+  right: auto;
+  left: 10px;
+}
+
+/* Fake UI inside Card */
+.glass-header {
+  margin-bottom: 24px;
+}
+
+.window-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.glass-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-title {
+  height: 18px;
+  background-color: rgba(28, 25, 23, 0.1);
+  border-radius: 6px;
+}
+
+.skeleton-line {
+  height: 10px;
+  background-color: rgba(28, 25, 23, 0.05);
+  border-radius: 4px;
+}
+
+.skeleton-box {
+  height: 80px;
+  background-color: rgba(249, 115, 22, 0.05);
+  border-radius: 12px;
+  border: 1px dashed rgba(249, 115, 22, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .feature-row, .feature-row.row-reverse {
+    flex-direction: column;
+    text-align: center;
+    gap: 3rem;
+    margin-bottom: 6rem;
+  }
+  
+  .connector {
+    display: none; /* Hide connectors on mobile */
+  }
+  
+  .feature-text-wrapper {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .feature-card-glass {
+    max-width: 100%;
+  }
+}

@@ -4,9 +4,9 @@ import { History } from 'lucide-react';
 import Sidebar from '../components/Sidebar/Sidebar';
 import Editor from '../components/Editor/Editor';
 import VersionHistory from '../components/VersionHistory/VersionHistory';
-import './HomePage.css';
+import './NotesPage.css';
 
-const HomePage = () => {
+const NotesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [showVersions, setShowVersions] = useState(false);
@@ -85,4 +85,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default NotesPage;

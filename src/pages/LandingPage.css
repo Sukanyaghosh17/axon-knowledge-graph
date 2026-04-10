@@ -1,0 +1,159 @@
+/* LandingPage.css */
+
+.landing-container {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  padding: 0 4rem;
+}
+
+/* --- Navbar --- */
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+}
+
+.landing-brand {
+  font-size: 1.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.brand-icon {
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.landing-links {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.landing-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.landing-links a:hover {
+  color: var(--accent);
+}
+
+.landing-auth {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Landing Buttons Base */
+.landing-btn {
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px; /* Pill shape */
+  font-weight: 500;
+  font-size: 1rem;
+  text-decoration: none;
+  border: 1.5px solid var(--text-primary);
+  transition: transform var(--transition), box-shadow var(--transition);
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+}
+
+.landing-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 2px 0px rgba(35, 31, 30, 0.2);
+}
+
+.btn-signup, .btn-cta {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.btn-login {
+  background-color: transparent;
+  color: var(--text-primary);
+}
+
+/* --- Main Content --- */
+.landing-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 0;
+  gap: 2rem;
+}
+
+.landing-text-content {
+  flex: 1;
+  max-width: 55%;
+}
+
+.landing-tagline {
+  font-size: 4rem;
+  font-weight: 400;
+  line-height: 1.1;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.text-orange {
+  color: var(--accent);
+}
+
+.landing-description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 3rem;
+  max-width: 85%;
+}
+
+.btn-cta {
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.landing-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.landing-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .landing-container {
+    padding: 0 2rem;
+  }
+  .landing-main {
+    flex-direction: column;
+    text-align: center;
+    padding-top: 4rem;
+  }
+  .landing-text-content {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .landing-links {
+    display: none; /* Hide on very small screens for now */
+  }
+}

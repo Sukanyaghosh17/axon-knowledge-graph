@@ -14,10 +14,10 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import './GraphView.css';
 
-// Tag-based color palette
+// Tag-based color palette (Warm Orange/Amber theme)
 const TAG_COLORS = [
-  '#5E81AC', '#88C0D0', '#A3BE8C', '#EBCB8B',
-  '#D08770', '#B48EAD', '#BF616A', '#81A1C1',
+  '#F97316', '#FB923C', '#FDBA74', '#EA580C',
+  '#9A3412', '#C2410C', '#78350F', '#B45309',
 ];
 
 // Layout nodes in a circular + force-like arrangement
@@ -140,8 +140,8 @@ const GraphView = () => {
     navigate(`/?note=${node.id}`);
   }, [navigate]);
 
-  const bgColor = theme === 'dark' ? '#2E3440' : '#F0F7EE';
-  const dotColor = theme === 'dark' ? '#4C566A' : '#D0DDD9';
+  const bgColor = theme === 'dark' ? '#1C1917' : '#F5F5F4';
+  const dotColor = theme === 'dark' ? '#44403C' : '#D6D3D1';
 
   if (loading) {
     return (
@@ -202,7 +202,7 @@ const GraphView = () => {
             border: '1px solid var(--border)',
             borderRadius: '10px',
           }}
-          maskColor={theme === 'dark' ? 'rgba(46,52,64,0.7)' : 'rgba(240,247,238,0.7)'}
+          maskColor={theme === 'dark' ? 'rgba(28,25,23,0.7)' : 'rgba(245,245,244,0.7)'}
         />
       </ReactFlow>
     </div>

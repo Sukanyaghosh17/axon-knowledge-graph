@@ -175,7 +175,7 @@
 /* Wikilinks highlighted in raw mode */
 .wikilink {
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: var(--highlight);
   border-radius: 3px;
   padding: 0 3px;
 }
@@ -215,6 +215,10 @@
   transition: all var(--transition);
 }
 .link-chip:hover { background: var(--accent); color: #fff; }
-.link-chip.backlink { background: color-mix(in srgb, var(--accent-soft) 40%, transparent); color: var(--text-secondary); }
+.link-chip.backlink { 
+  background: var(--surface-2); 
+  color: var(--text-secondary); 
+  border: 1px solid var(--border);
+}
 .link-chip.backlink:hover { background: var(--accent-soft); color: var(--text-primary); }
 .link-chip.unresolved { background: var(--surface-2); color: var(--text-muted); cursor: default; }
