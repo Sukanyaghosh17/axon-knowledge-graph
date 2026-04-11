@@ -42,7 +42,7 @@ const Navbar = () => {
       {/* Brand */}
       <div className="navbar-brand">
         <div className="navbar-logo">
-          <GitBranch size={18} />
+          <img src="/Logo.png" alt="Axon Logo" className="navbar-logo-img" />
         </div>
         <span className="navbar-title">Axon</span>
         <span className="navbar-tagline">where ideas flow</span>

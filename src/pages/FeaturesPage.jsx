@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { PenTool } from 'lucide-react';
+
 import Features from '../components/Features/Features';
 import './LandingPage.css';
 
@@ -10,7 +10,8 @@ const FeaturesPage = () => {
       <nav className="landing-nav">
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="landing-brand">
-            Axon <PenTool size={20} className="brand-icon" />
+            <img src="/Logo.png" alt="Axon" className="landing-brand-logo" />
+            Axon
           </div>
         </Link>
         <div className="landing-links">

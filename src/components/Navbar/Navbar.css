@@ -1,7 +1,6 @@
 .navbar {
   height: var(--navbar-height);
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   padding: 0 20px;
@@ -20,12 +19,20 @@
   flex-shrink: 0;
 }
 .navbar-logo {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-soft));
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.navbar-logo-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
 }
 .navbar-title {
   font-size: 1.05rem;

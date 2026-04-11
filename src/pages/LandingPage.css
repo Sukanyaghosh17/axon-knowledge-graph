@@ -23,12 +23,14 @@
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 10px;
 }
 
-.brand-icon {
-  color: var(--accent);
-  margin-top: 2px;
+.landing-brand-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 10px;
 }
 
 .landing-links {
