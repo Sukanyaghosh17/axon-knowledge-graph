@@ -40,7 +40,11 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       {/* Brand */}
-      <div className="navbar-brand">
+      <div 
+        className="navbar-brand" 
+        onClick={() => navigate('/')} 
+        style={{ cursor: 'pointer' }}
+      >
         <div className="navbar-logo">
           <img src="/Logo.png" alt="Axon Logo" className="navbar-logo-img" />
         </div>

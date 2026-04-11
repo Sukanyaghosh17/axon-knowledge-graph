@@ -1,0 +1,175 @@
+/* src/pages/SignUpPage.css */
+
+/* Full page — transparent yellow background */
+.signup-root {
+  min-height: 100vh;
+  background: rgba(255, 130, 30, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  font-family: var(--font-sans);
+}
+
+/* The curvy card containing the image */
+.signup-container {
+  width: 100%;
+  max-width: 620px;
+  min-height: 80vh;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  background-image: url('/background_signup.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: 0 20px 60px rgba(200, 140, 30, 0.22), 0 6px 18px rgba(0,0,0,0.08);
+  animation: slideUp .45s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 50px 60px 40px;
+}
+
+.signup-form-side {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+/* Header */
+.signup-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.signup-header h1 {
+  font-size: 54px;
+  margin: 0 0 8px 0;
+  color: #1a1f2e;
+  letter-spacing: -1.5px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-shadow: 0 1px 8px rgba(255,255,255,0.5);
+}
+
+.signup-header p {
+  color: #2d3748;
+  font-size: 18px;
+  margin: 0;
+  font-weight: 500;
+  text-shadow: 0 1px 6px rgba(255,255,255,0.6);
+}
+
+/* Form */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Pill Inputs */
+.input-wrapper {
+  background: #ffffff;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  padding: 6px 24px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18), 0 3px 8px rgba(0, 0, 0, 0.10);
+  transition: all 0.2s ease;
+  border: 1.5px solid rgba(255, 255, 255, 1);
+}
+
+.input-wrapper:focus-within {
+  border-color: rgba(240, 140, 60, 0.4);
+  box-shadow: 0 4px 20px rgba(240, 140, 60, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.input-icon {
+  color: #9baabf;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.input-wrapper input {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: #4a5568;
+  font-weight: 500;
+  outline: none;
+  padding: 15px 0;
+  width: 100%;
+  font-family: inherit;
+}
+
+.input-wrapper input::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+/* Submit Button */
+.form-submit-wrapper {
+  display: flex;
+  margin-top: 4px;
+}
+
+.submit-btn {
+  width: 100%;
+  border-radius: 40px;
+  background: linear-gradient(90deg, #f09030, #f4b840);
+  color: white;
+  font-weight: 800;
+  font-size: 21px;
+  padding: 17px;
+  box-shadow: 0 8px 22px rgba(230, 140, 40, 0.28);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(230, 140, 40, 0.38);
+}
+
+/* Footer link */
+.signup-footer {
+  text-align: center;
+  margin-top: 56px;
+  font-size: 15px;
+  color: #2d3748;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.7);
+}
+
+.signup-footer a {
+  color: #1a202c;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.signup-footer a:hover {
+  text-decoration: underline;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 680px) {
+  .signup-container { padding: 40px 28px 32px; border-radius: 28px; min-height: unset; }
+  .signup-header h1 { font-size: 38px; }
+  .signup-header p  { font-size: 15px; }
+}

@@ -17,12 +17,11 @@ const FeaturesPage = () => {
         <div className="landing-links">
           <Link to="/">Home</Link>
           <Link to="/features">Feature</Link>
-          <Link to="/">Discover</Link>
           <Link to="/contact">Contact</Link>
         </div>
         <div className="landing-auth">
-          <Link to="/app" className="landing-btn btn-signup">Sign Up</Link>
-          <Link to="/app" className="landing-btn btn-login">Log in</Link>
+          <Link to="/signup" className="landing-btn btn-signup">Sign Up</Link>
+          <Link to="/login" className="landing-btn btn-login">Log in</Link>
         </div>
       </nav>
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus, Search, Archive, FolderOpen, HelpCircle, Settings,
   ChevronRight, ChevronLeft, PenSquare, Tag, Folder,
-  ChevronDown, ChevronUp, Moon, Sun
+  ChevronDown, ChevronUp, Moon, Sun, X, CheckSquare, Square
 } from 'lucide-react';
 import { fetchAllNotes, createNote } from '../api';
 import { useTheme } from '../context/ThemeContext';
@@ -104,6 +104,11 @@ const AppDashboard = () => {
   const [foldersExpanded, setFoldersExpanded] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
 
+  // Folder modal state
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [newFolderVisibility, setNewFolderVisibility] = useState('private');
+
   const loadNotes = useCallback(async () => {
     try {
       const res = await fetchAllNotes();
@@ -164,10 +169,10 @@ const AppDashboard = () => {
       <aside className="dash-sidebar">
         {/* Brand */}
         <div className="dash-brand">
-          <div className="dash-brand-logo">
+          <div className="dash-brand-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <img src="/Logo.png" alt="Axon" className="dash-brand-logo-img" />
           </div>
-          <div className="dash-brand-info">
+          <div className="dash-brand-info" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <span className="dash-brand-name">Axon</span>
             <span className="dash-brand-sub">Knowledge Graph</span>
           </div>
@@ -222,7 +227,11 @@ const AppDashboard = () => {
               <span>Folders</span>
             </div>
             <div className="dash-folders-controls">
-              <button className="dash-icon-btn" title="New folder (add a tag)">
+              <button 
+                className="dash-icon-btn" 
+                title="New folder (add a tag)"
+                onClick={() => setIsFolderModalOpen(true)}
+              >
                 <Plus size={13} />
               </button>
               <button
@@ -388,6 +397,69 @@ const AppDashboard = () => {
           </div>
         </section>
       </main>
+
+      {/* ── Folder Modal ── */}
+      {isFolderModalOpen && (
+        <div className="dash-modal-overlay">
+          <div className="dash-modal">
+            <div className="dash-modal-header">
+              <h3>Create new folder</h3>
+              <button className="dash-modal-close" onClick={() => setIsFolderModalOpen(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="dash-modal-body">
+              <input 
+                className="dash-modal-input" 
+                placeholder="Enter folder name"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                autoFocus
+              />
+              
+              <div className="dash-modal-visibility">
+                <label className="dash-modal-label">Set visibility to</label>
+                
+                <div 
+                  className={`dash-visibility-option ${newFolderVisibility === 'private' ? 'selected' : ''}`}
+                  onClick={() => setNewFolderVisibility('private')}
+                >
+                  <div className="dash-visibility-check">
+                    {newFolderVisibility === 'private' ? <CheckSquare size={16} className="checked-icon" /> : <Square size={16} />}
+                  </div>
+                  <div className="dash-visibility-text">
+                    <span className="dash-visibility-title">Private</span>
+                    <span className="dash-visibility-desc">Only you can access this folder</span>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`dash-visibility-option ${newFolderVisibility === 'public' ? 'selected' : ''}`}
+                  onClick={() => setNewFolderVisibility('public')}
+                >
+                  <div className="dash-visibility-check">
+                    {newFolderVisibility === 'public' ? <CheckSquare size={16} className="checked-icon" /> : <Square size={16} />}
+                  </div>
+                  <div className="dash-visibility-text">
+                    <span className="dash-visibility-title">Public</span>
+                    <span className="dash-visibility-desc">Everyone can have access to it</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="dash-modal-footer">
+              <button className="dash-modal-cancel" onClick={() => setIsFolderModalOpen(false)}>Cancel</button>
+              <button className="dash-modal-create" onClick={() => {
+                // Future folder creation logic goes here
+                setIsFolderModalOpen(false);
+                setNewFolderName('');
+              }}>Create</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
