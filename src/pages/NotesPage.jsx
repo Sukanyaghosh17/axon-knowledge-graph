@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Plus, Search, FileText, Trash2, Clock, ArrowLeft,
-  Save, Eye, Edit3, Tag, X, Link2, RotateCcw, History,
-  ChevronRight, ChevronsLeft, Bell
+  Save, Tag, X, Link2, RotateCcw, History,
+  ChevronRight, ChevronsLeft, Bell, Bold, Italic,
+  Underline as UnderlineIcon, Strikethrough, List, ListOrdered,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  Undo2, Redo2, Type, Highlighter, Link, Image as ImageIcon,
+  Code2, Quote, Minus, ChevronDown, Info
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import {
   fetchAllNotes, createNote, deleteNote,
   fetchNote, updateNote, fetchLinks, fetchBacklinks,
@@ -39,8 +41,541 @@ const formatDateTime = (dateStr) => {
   return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
-const stripMarkdown = (text) =>
-  (text || '').replace(/[#*`_~\[\]>]/g, '').replace(/\n+/g, ' ').trim();
+const stripHtml = (html) =>
+  (html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+/* ── Font options ────────────────────────────────────────── */
+const FONTS = ['Sans Serif', 'Serif', 'Slab Serif', 'Monospace', 'Script', 'Handwritten'];
+const FONT_MAP = {
+  'Sans Serif':  'Inter, system-ui, sans-serif',
+  'Serif':       'Georgia, "Times New Roman", serif',
+  'Slab Serif':  '"Roboto Slab", "Courier New", serif',
+  'Monospace':   '"JetBrains Mono", "Courier New", monospace',
+  'Script':      '"Dancing Script", cursive',
+  'Handwritten': '"Caveat", cursive',
+};
+const FONT_SIZES = ['12', '13', '14', '15', '16', '18', '20', '24', '28', '32', '36', '40', '48', '64'];
+const TEXT_COLORS = [
+  { label: 'Default', value: 'inherit' },
+  { label: 'Light Gray', value: '#d1d5db' },
+  { label: 'Gray', value: '#9ca3af' },
+  { label: 'Medium Gray', value: '#6b7280' },
+  { label: 'Dark Gray', value: '#374151' },
+  { label: 'Black', value: '#000000' },
+  { label: 'Purple', value: '#8b5cf6' },
+  { label: 'Magenta', value: '#d946ef' },
+  { label: 'Pink', value: '#f472b6' },
+  { label: 'Red', value: '#ef4444' },
+  { label: 'Orange', value: '#f97316' },
+  { label: 'Yellow', value: '#facc15' },
+  { label: 'Green', value: '#22c55e' },
+  { label: 'Teal', value: '#14b8a6' },
+  { label: 'Cyan', value: '#06b6d4' },
+  { label: 'Blue', value: '#3b82f6' },
+  { label: 'Royal Blue', value: '#2563eb' },
+];
+const HIGHLIGHT_COLORS = [
+  { label: 'None', value: 'transparent' },
+  { label: 'Soft Yellow', value: 'rgba(254, 240, 138, 0.6)' },
+  { label: 'Light Pink', value: 'rgba(252, 231, 243, 0.6)' },
+  { label: 'Mint Green', value: 'rgba(209, 250, 229, 0.6)' },
+  { label: 'Light Cyan', value: 'rgba(207, 250, 254, 0.6)' },
+  { label: 'Lavender', value: 'rgba(237, 233, 254, 0.6)' },
+  { label: 'Peach', value: 'rgba(255, 237, 213, 0.6)' },
+];
+
+/* ── Toolbar Dropdown ────────────────────────────────────── */
+const ToolbarDropdown = ({ trigger, children, className = '', title }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+  return (
+    <div className={`tb-dropdown ${className}`} ref={ref}>
+      <button 
+        className="tb-dropdown-trigger" 
+        onClick={() => setOpen(p => !p)} 
+        onMouseDown={(e) => e.preventDefault()}
+        type="button"
+        data-tooltip={title}
+      >
+        {trigger}
+        <ChevronDown size={10} className="tb-dropdown-arrow" />
+      </button>
+      {open && <div className="tb-dropdown-menu" onClick={() => setOpen(false)}>{children}</div>}
+    </div>
+  );
+};
+
+/* ── Rich Toolbar ────────────────────────────────────────── */
+const RichToolbar = ({ editorRef, font, setFont, fontSize, setFontSize, handleEditorInput }) => {
+  // Robust selection save using marker nodes
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (!sel.rangeCount || !editorRef.current?.contains(sel.anchorNode)) return null;
+    
+    const range = sel.getRangeAt(0);
+    const startMarker = document.createElement('span');
+    startMarker.id = 'selection-marker-start';
+    startMarker.style.display = 'none';
+    const endMarker = document.createElement('span');
+    endMarker.id = 'selection-marker-end';
+    endMarker.style.display = 'none';
+
+    const rangeEnd = range.cloneRange();
+    rangeEnd.collapse(false);
+    rangeEnd.insertNode(endMarker);
+
+    const rangeStart = range.cloneRange();
+    rangeStart.collapse(true);
+    rangeStart.insertNode(startMarker);
+
+    return { startMarker, endMarker };
+  };
+
+  // Restore selection using markers and clean up
+  const restoreSelection = (markers) => {
+    if (!markers || !editorRef.current) {
+        editorRef.current?.focus();
+        return;
+    }
+    
+    const { startMarker, endMarker } = markers;
+    const sel = window.getSelection();
+    const range = document.createRange();
+
+    range.setStartAfter(startMarker);
+    range.setEndBefore(endMarker);
+
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    startMarker.remove();
+    endMarker.remove();
+    editorRef.current.focus();
+  };
+
+  const exec = (cmd, val = null) => {
+    const markers = saveSelection();
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, val);
+    restoreSelection(markers);
+  };
+
+  const [activeBlock, setActiveBlock] = useState('Normal Text');
+
+  const turnInto = (type, tag) => {
+    const markers = saveSelection();
+    setActiveBlock(type);
+    editorRef.current?.focus();
+    document.execCommand('formatBlock', false, `<${tag}>`);
+    if (tag === 'p') {
+      document.execCommand('removeFormat', false, null);
+    }
+    restoreSelection(markers);
+  };
+
+  const [activeColor, setActiveColor] = useState('inherit');
+  const [activeHighlight, setActiveHighlight] = useState('transparent');
+
+  const applyColor = (color) => {
+    const markers = saveSelection();
+    setActiveColor(color);
+    editorRef.current?.focus();
+    document.execCommand('foreColor', false, color === 'inherit' ? '#1C1917' : color);
+    restoreSelection(markers);
+  };
+
+  const applyHighlight = (color) => {
+    const markers = saveSelection();
+    setActiveHighlight(color);
+    editorRef.current?.focus();
+    document.execCommand('hiliteColor', false, color === 'transparent' ? 'transparent' : color);
+    restoreSelection(markers);
+  };
+
+  const applyFont = (f) => {
+    const markers = saveSelection();
+    setFont(f);
+    if (editorRef.current) {
+        editorRef.current.style.fontFamily = FONT_MAP[f];
+    }
+    restoreSelection(markers);
+  };
+
+  const applyFontSize = (size) => {
+    const markers = saveSelection();
+    setFontSize(size);
+    editorRef.current?.focus();
+    document.execCommand('styleWithCSS', false, false);
+    document.execCommand('fontSize', false, '7');
+    const fontEls = editorRef.current?.querySelectorAll('font[size="7"]');
+    fontEls?.forEach(el => {
+      const span = document.createElement('span');
+      span.style.fontSize = `${size}px`;
+      span.innerHTML = el.innerHTML;
+      el.parentNode.replaceChild(span, el);
+    });
+    restoreSelection(markers);
+    handleEditorInput();
+  };
+
+  const insertLink = () => {
+    const url = window.prompt('Enter URL:');
+    if (url) exec('createLink', url);
+  };
+
+  const insertHr = () => {
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0"/>');
+  };
+
+  const insertCodeBlock = () => {
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false,
+      '<pre style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-family:JetBrains Mono,monospace;font-size:0.85rem;margin:8px 0;white-space:pre-wrap"><code>code here</code></pre>'
+    );
+  };
+
+  const insertQuote = () => {
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false,
+      '<blockquote style="border-left:3px solid var(--accent);padding-left:16px;margin:8px 0;color:var(--text-muted);font-style:italic">Quote</blockquote>'
+    );
+  };
+
+  return (
+    <div className="rich-toolbar">
+      {/* Undo / Redo */}
+      <div className="tb-group">
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('undo')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Undo (Ctrl+Z)" 
+          type="button"
+        >
+          <Undo2 size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('redo')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Redo (Ctrl+Y)" 
+          type="button"
+        >
+          <Redo2 size={14} />
+        </button>
+      </div>
+
+      <div className="tb-sep" />
+
+      {/* Turn into */}
+      <ToolbarDropdown
+        title="Turn into..."
+        trigger={
+          <span className="tb-font-label">
+            {activeBlock === 'Normal Text' ? 'Aa' : 
+             activeBlock === 'H1 Large Header' ? 'H1' : 
+             activeBlock === 'H2 Medium Header' ? 'H2' : 
+             activeBlock === 'H3 Small Header' ? 'H3' : 'Aa'}
+          </span>
+        }
+        className="tb-turn-into-dd"
+      >
+        <div className="tb-turn-into-header">
+          <span>Turn into</span>
+          <Info size={14} className="tb-info-icon" />
+        </div>
+        <button className={`tb-dd-item ${activeBlock === 'Normal Text' ? 'active' : ''}`} onClick={() => turnInto('Normal Text', 'p')}>
+           <div className="tb-dd-item-content">
+             <span className="tb-block-icon">Aa</span>
+             <span className="tb-block-text">Normal Text</span>
+           </div>
+           <ChevronRight size={14} />
+        </button>
+        <button className={`tb-dd-item ${activeBlock === 'H1 Large Header' ? 'active' : ''}`} onClick={() => turnInto('H1 Large Header', 'h1')}>
+           <div className="tb-dd-item-content">
+             <span className="tb-block-icon h1">H1</span>
+             <span className="tb-block-text">H1 Large Header</span>
+           </div>
+           <ChevronRight size={14} />
+        </button>
+        <button className={`tb-dd-item ${activeBlock === 'H2 Medium Header' ? 'active' : ''}`} onClick={() => turnInto('H2 Medium Header', 'h2')}>
+           <div className="tb-dd-item-content">
+             <span className="tb-block-icon h2">H2</span>
+             <span className="tb-block-text">H2 Medium Header</span>
+           </div>
+           <ChevronRight size={14} />
+        </button>
+        <button className={`tb-dd-item ${activeBlock === 'H3 Small Header' ? 'active' : ''}`} onClick={() => turnInto('H3 Small Header', 'h3')}>
+           <div className="tb-dd-item-content">
+             <span className="tb-block-icon h3">H3</span>
+             <span className="tb-block-text">H3 Small Header</span>
+           </div>
+           <ChevronRight size={14} />
+        </button>
+        <div className="tb-dd-sep" />
+        <button className="tb-dd-item footer">
+          Change default settings...
+        </button>
+      </ToolbarDropdown>
+
+      <div className="tb-sep" />
+
+      {/* Font family */}
+      <ToolbarDropdown 
+        title="Font family"
+        trigger={<span className="tb-font-label">{font}</span>} 
+        className="tb-font-dd"
+      >
+        {FONTS.map(f => (
+          <button
+            key={f}
+            className={`tb-dd-item ${font === f ? 'active' : ''}`}
+            onClick={() => applyFont(f)}
+            style={{ fontFamily: FONT_MAP[f] }}
+            type="button"
+          >{f}</button>
+        ))}
+      </ToolbarDropdown>
+
+      {/* Font size */}
+      <ToolbarDropdown 
+        title="Font size"
+        trigger={<span className="tb-size-label">{fontSize}</span>} 
+        className="tb-size-dd"
+      >
+        {FONT_SIZES.map(s => (
+          <button
+            key={s}
+            className={`tb-dd-item ${fontSize === s ? 'active' : ''}`}
+            onClick={() => applyFontSize(s)}
+            type="button"
+          >{s}</button>
+        ))}
+      </ToolbarDropdown>
+
+      <div className="tb-sep" />
+
+      {/* Text format */}
+      <div className="tb-group">
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('bold')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Bold" 
+          type="button"
+        >
+          <Bold size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('italic')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Italic" 
+          type="button"
+        >
+          <Italic size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('underline')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Underline" 
+          type="button"
+        >
+          <UnderlineIcon size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('strikeThrough')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Strikethrough" 
+          type="button"
+        >
+          <Strikethrough size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={insertLink} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Insert link" 
+          type="button"
+        >
+          <Link size={14} />
+        </button>
+      </div>
+
+      <div className="tb-sep" />
+
+      {/* Text color */}
+      <ToolbarDropdown
+        title="Text color"
+        trigger={
+          <span className="tb-color-trigger">
+            <Type size={13} />
+            <span className="tb-color-swatch" style={{ background: activeColor === 'inherit' ? 'var(--text-primary)' : activeColor }} />
+          </span>
+        }
+        className="tb-color-dd"
+      >
+        <div className="tb-color-menu">
+          <button 
+            className={`tb-color-auto ${activeColor === 'inherit' ? 'active' : ''}`}
+            onClick={() => applyColor('inherit')}
+            onMouseDown={(e) => e.preventDefault()}
+            data-tooltip="Reset to default color"
+          >
+            <div className="tb-color-auto-icon" />
+            <span>Auto</span>
+          </button>
+          
+          <div className="tb-color-grid">
+            {TEXT_COLORS.filter(c => c.value !== 'inherit').map(c => (
+              <button
+                key={c.value}
+                className={`tb-color-dot ${activeColor === c.value ? 'active' : ''}`}
+                style={{ background: c.value }}
+                onClick={() => applyColor(c.value)}
+                onMouseDown={(e) => e.preventDefault()}
+                title={c.label}
+                type="button"
+              />
+            ))}
+          </div>
+        </div>
+      </ToolbarDropdown>
+
+      {/* Highlight */}
+      <ToolbarDropdown
+        title="Highlight color"
+        trigger={
+          <span className="tb-color-trigger">
+            <Highlighter size={13} />
+            <span className="tb-color-swatch" style={{ background: activeHighlight === 'transparent' ? 'transparent' : activeHighlight, border: '1px solid var(--border)' }} />
+          </span>
+        }
+        className="tb-color-dd"
+      >
+        <div className="tb-color-grid">
+          {HIGHLIGHT_COLORS.map(c => (
+            <button
+              key={c.value}
+              className={`tb-color-dot ${activeHighlight === c.value ? 'active' : ''}`}
+              style={{ background: c.value, border: '1px solid var(--border-strong)' }}
+              onClick={() => applyHighlight(c.value)}
+              title={c.label}
+              type="button"
+            />
+          ))}
+        </div>
+      </ToolbarDropdown>
+
+      <div className="tb-sep" />
+
+      {/* Lists */}
+      <div className="tb-group">
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('insertUnorderedList')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Bullet list" 
+          type="button"
+        >
+          <List size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('insertOrderedList')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Numbered list" 
+          type="button"
+        >
+          <ListOrdered size={14} />
+        </button>
+      </div>
+
+      <div className="tb-sep" />
+
+      {/* Alignment */}
+      <div className="tb-group">
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('justifyLeft')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Align left" 
+          type="button"
+        >
+          <AlignLeft size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('justifyCenter')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Align center" 
+          type="button"
+        >
+          <AlignCenter size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('justifyRight')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Align right" 
+          type="button"
+        >
+          <AlignRight size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={() => exec('justifyFull')} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Justify" 
+          type="button"
+        >
+          <AlignJustify size={14} />
+        </button>
+      </div>
+
+      <div className="tb-sep" />
+
+      {/* Insert extras */}
+      <div className="tb-group">
+        <button 
+          className="tb-btn" 
+          onClick={insertCodeBlock} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Code block" 
+          type="button"
+        >
+          <Code2 size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={insertQuote} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Blockquote" 
+          type="button"
+        >
+          <Quote size={14} />
+        </button>
+        <button 
+          className="tb-btn" 
+          onClick={insertHr} 
+          onMouseDown={(e) => e.preventDefault()}
+          data-tooltip="Horizontal rule" 
+          type="button"
+        >
+          <Minus size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 /* ── NotesPage ───────────────────────────────────────────── */
 const NotesPage = () => {
@@ -61,10 +596,13 @@ const NotesPage = () => {
   const [content, setContent]           = useState('');
   const [tags, setTags]                 = useState([]);
   const [tagInput, setTagInput]         = useState('');
-  const [preview, setPreview]           = useState(false);
   const [saving, setSaving]             = useState(false);
   const [dirty, setDirty]               = useState(false);
   const [editorLoading, setEditorLoading] = useState(false);
+
+  // ── Toolbar state ──
+  const [font, setFont]         = useState('Sans Serif');
+  const [fontSize, setFontSize] = useState('15');
 
   // ── Right panel ──
   const [links, setLinks]               = useState([]);
@@ -73,6 +611,7 @@ const NotesPage = () => {
   const [restoringIdx, setRestoringIdx] = useState(null);
 
   const saveTimeout = useRef(null);
+  const editorRef   = useRef(null);
 
   /* ─── load note list ───────────────────────────────────── */
   const loadNotes = useCallback(async () => {
@@ -94,12 +633,18 @@ const NotesPage = () => {
     if (id && id !== activeNoteId) openNote(id);
   }, [searchParams]);
 
+  /* ─── sync editor content → state ─────────────────────── */
+  const handleEditorInput = () => {
+    const html = editorRef.current?.innerHTML || '';
+    setContent(html);
+    setDirty(true);
+  };
+
   /* ─── open / load a note ───────────────────────────────── */
   const openNote = async (id) => {
     setActiveNoteId(id);
     setSearchParams({ note: id });
     setEditorLoading(true);
-    setPreview(false);
     try {
       const [noteRes, linksRes, backRes, versRes] = await Promise.all([
         fetchNote(id),
@@ -116,6 +661,10 @@ const NotesPage = () => {
       setBacklinks(backRes.data.data || []);
       setVersions(versRes.data.data || []);
       setDirty(false);
+      // Inject HTML into contenteditable
+      if (editorRef.current) {
+        editorRef.current.innerHTML = n.content || '';
+      }
     } catch (err) {
       console.error('Failed to load note:', err);
     } finally {
@@ -123,12 +672,23 @@ const NotesPage = () => {
     }
   };
 
+  // When the editor mounts after loading, set its content
+  useEffect(() => {
+    if (!editorLoading && editorRef.current && activeNoteId) {
+      if (editorRef.current.innerHTML !== content) {
+        editorRef.current.innerHTML = content;
+      }
+    }
+  }, [editorLoading]);
+
   /* ─── auto-save ────────────────────────────────────────── */
   const handleSave = useCallback(async () => {
     if (!activeNoteId || !dirty) return;
     setSaving(true);
     try {
-      await updateNote(activeNoteId, { title, content, tags });
+      const htmlContent = editorRef.current?.innerHTML || content;
+      await updateNote(activeNoteId, { title, content: htmlContent, tags });
+      setContent(htmlContent);
       setDirty(false);
       loadNotes();
       const [linksRes, backRes, versRes] = await Promise.all([
@@ -183,6 +743,7 @@ const NotesPage = () => {
         setActiveNote(null);
         setSearchParams({});
         setTitle(''); setContent(''); setTags([]);
+        if (editorRef.current) editorRef.current.innerHTML = '';
       }
     } catch (err) {
       console.error('Delete failed:', err);
@@ -220,7 +781,7 @@ const NotesPage = () => {
     ? notes.filter((n) => {
       const q = listSearch.toLowerCase();
       return (n.title || '').toLowerCase().includes(q) ||
-             (n.content || '').toLowerCase().includes(q);
+             stripHtml(n.content || '').toLowerCase().includes(q);
     })
     : notes;
 
@@ -290,7 +851,7 @@ const NotesPage = () => {
               onClick={() => openNote(note._id)}
             >
               <span className="note-list-item-title">{note.title || 'Untitled'}</span>
-              <span className="note-list-item-preview">{stripMarkdown(note.content) || 'No content'}</span>
+              <span className="note-list-item-preview">{stripHtml(note.content) || 'No content'}</span>
               <div className="note-list-item-meta">
                 <Clock size={10} />
                 <span className="note-list-item-time">{formatRelTime(note.updatedAt)}</span>
@@ -344,14 +905,11 @@ const NotesPage = () => {
             {/* ── Top bar: breadcrumb + actions ── */}
             <div className="editor-topbar">
               <div className="editor-topbar-left">
-                {/* Collapse icons (decorative, matching Evernote chrome) */}
                 <div className="editor-topbar-collapse">
                   <button className="editor-collapse-btn" onClick={() => navigate('/app')} title="Back">
                     <ChevronsLeft size={16} />
                   </button>
                 </div>
-
-                {/* Breadcrumb */}
                 <nav className="editor-breadcrumb">
                   <button className="editor-breadcrumb-link" onClick={() => navigate('/app')}>
                     Axon
@@ -371,14 +929,6 @@ const NotesPage = () => {
                   {!saving && !dirty && '✓ Saved'}
                 </span>
 
-                {/* Preview/Edit toggle */}
-                <button
-                  className={`editor-btn ${preview ? 'active' : ''}`}
-                  onClick={() => setPreview((p) => !p)}
-                >
-                  {preview ? <><Edit3 size={13} /> Edit</> : <><Eye size={13} /> Preview</>}
-                </button>
-
                 {/* Manual Save */}
                 <button
                   className="editor-btn primary"
@@ -387,8 +937,31 @@ const NotesPage = () => {
                 >
                   <Save size={13} /> Save
                 </button>
+
+                {/* Delete Note */}
+                <button
+                  className="editor-btn"
+                  onClick={(e) => handleDelete(e, activeNoteId)}
+                  disabled={deletingId === activeNoteId}
+                  style={{ color: '#dc2626', borderColor: '#fee2e2' }}
+                  title="Delete Note"
+                >
+                  {deletingId === activeNoteId
+                    ? <><div className="dash-spinner" style={{ width: 13, height: 13, borderWidth: 1.5 }} /> Deleting…</>
+                    : <><Trash2 size={13} /> Delete</>}
+                </button>
               </div>
             </div>
+
+            {/* ── Rich Formatting Toolbar ── */}
+            <RichToolbar
+              editorRef={editorRef}
+              font={font}
+              setFont={setFont}
+              fontSize={fontSize}
+              setFontSize={setFontSize}
+              handleEditorInput={handleEditorInput}
+            />
 
             {/* ── Edited time ── */}
             {activeNote && (
@@ -397,7 +970,7 @@ const NotesPage = () => {
               </div>
             )}
 
-            {/* ── Title + start-writing hint + tags ── */}
+            {/* ── Title + tags ── */}
             <div className="editor-note-header">
               <input
                 className="editor-note-title"
@@ -405,11 +978,6 @@ const NotesPage = () => {
                 onChange={(e) => change(() => setTitle(e.target.value))}
                 placeholder="Title"
               />
-              {!content && !preview && (
-                <p className="editor-start-hint">
-                  Start writing, drag files or start from a template
-                </p>
-              )}
               {/* Tags */}
               <div className="editor-tags-row">
                 <Tag size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
@@ -431,27 +999,26 @@ const NotesPage = () => {
               </div>
             </div>
 
-            {/* ── Content area ── */}
+            {/* ── Rich Text Content area ── */}
             <div className="editor-content-area">
-              {preview ? (
-                <div className="editor-preview-area">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {content || '*Nothing to preview*'}
-                  </ReactMarkdown>
-                </div>
-              ) : (
-                <textarea
-                  className="editor-textarea"
-                  value={content}
-                  onChange={(e) => change(() => setContent(e.target.value))}
-                  placeholder={`Start writing…\n\nUse [[Note Title]] to link to other notes.\nMarkdown is fully supported.`}
-                  spellCheck={false}
-                  autoFocus
-                />
+              {/* Start hint when empty */}
+              {!content && (
+                <p className="editor-start-hint-overlay">
+                  Start writing, drag files or start from a template
+                </p>
               )}
+              <div
+                ref={editorRef}
+                className="editor-rich-content"
+                contentEditable
+                suppressContentEditableWarning
+                onInput={handleEditorInput}
+                style={{ fontFamily: FONT_MAP[font] }}
+                spellCheck={false}
+              />
             </div>
 
-            {/* ── Add tag bar (bottom) ── */}
+            {/* ── Add tag footer bar ── */}
             <div className="editor-add-tag-bar">
               <Bell size={13} />
               <span>Add tag</span>
@@ -519,7 +1086,7 @@ const NotesPage = () => {
                     <span className="vh-item-ver">v{versions.length - idx}</span>
                     <span className="vh-item-time">{formatDateTime(v.timestamp)}</span>
                   </div>
-                  <span className="vh-item-preview">{stripMarkdown(v.content) || 'Empty'}</span>
+                  <span className="vh-item-preview">{stripHtml(v.content) || 'Empty'}</span>
                   <button
                     className="vh-restore-btn"
                     onClick={() => handleRestore(idx)}

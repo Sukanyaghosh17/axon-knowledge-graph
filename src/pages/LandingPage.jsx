@@ -35,7 +35,7 @@ const LandingPage = () => {
           <p className="landing-description">
             Built for students, Axon helps you capture, organize, and revisit ideas with ease. No more lost notes — everything stays connected and evolving.
           </p>
-          <Link to="/app" className="landing-btn btn-cta">Try for Free</Link>
+          <Link to="/signup" className="landing-btn btn-cta">Try for Free</Link>
         </div>
         
         <div className="landing-image-container">

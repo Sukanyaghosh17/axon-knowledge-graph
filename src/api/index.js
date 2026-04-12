@@ -1,70 +1,29 @@
 import axios from 'axios';
 
-// ── In-Memory Mock Data ──────────────────────────────────────
-let mockNotes = [
-  { _id: '1', title: 'Welcome to Axon', content: 'Start creating your notes here. Use [[Note Title]] to link.', tags: ['welcome'], updatedAt: new Date().toISOString() },
-  { _id: '2', title: 'Design Ideas', content: '1. Use orange theme\n2. Evernote layout\n3. No AI or Upgrade features', tags: ['design'], updatedAt: new Date().toISOString() }
-];
-
-// Helper to simulate network latency and API response structure
-const delay = (ms) => new Promise(res => setTimeout(res, ms));
-const mockResponse = (data) => delay(250).then(() => ({ data: { data } }));
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  withCredentials: true,
+});
 
 // ── Notes ──────────────────────────────────────────────────
-export const fetchAllNotes = () => mockResponse(mockNotes);
-
-export const fetchNote = (id) => {
-  const note = mockNotes.find(n => n._id === id);
-  return mockResponse(note || {});
-};
-
-export const createNote = (data) => {
-  const newNote = {
-    _id: Math.random().toString(36).substr(2, 9),
-    title: data.title || 'Untitled',
-    content: data.content || '',
-    tags: data.tags || [],
-    updatedAt: new Date().toISOString()
-  };
-  mockNotes = [newNote, ...mockNotes];
-  return mockResponse(newNote);
-};
-
-export const updateNote = (id, data) => {
-  const idx = mockNotes.findIndex(n => n._id === id);
-  if (idx > -1) {
-    mockNotes[idx] = { ...mockNotes[idx], ...data, updatedAt: new Date().toISOString() };
-  }
-  return mockResponse(mockNotes[idx]);
-};
-
-export const deleteNote = (id) => {
-  mockNotes = mockNotes.filter(n => n._id !== id);
-  return mockResponse({ success: true });
-};
+export const fetchAllNotes = () => api.get('/notes');
+export const fetchNote = (id) => api.get(`/notes/${id}`);
+export const createNote = (data) => api.post('/notes', data);
+export const updateNote = (id, data) => api.put(`/notes/${id}`, data);
+export const deleteNote = (id) => api.delete(`/notes/${id}`);
 
 // ── Search ─────────────────────────────────────────────────
-export const searchNotes = (q) => {
-  const term = q.toLowerCase();
-  const results = mockNotes.filter(n => 
-    (n.title || '').toLowerCase().includes(term) || 
-    (n.content || '').toLowerCase().includes(term)
-  );
-  return mockResponse(results);
-};
+export const searchNotes = (q) => api.get(`/notes/search?q=${encodeURIComponent(q)}`);
 
 // ── Versions ───────────────────────────────────────────────
-export const fetchVersions = (id) => mockResponse([]); // Mock empty versions
-export const restoreVersion = (id, versionIndex) => mockResponse({});
+export const fetchVersions = (id) => api.get(`/notes/${id}/versions`);
+export const restoreVersion = (id, versionIndex) => api.post(`/notes/${id}/restore/${versionIndex}`);
 
 // ── Links ──────────────────────────────────────────────────
-export const fetchLinks = (id) => mockResponse([]);
-export const fetchBacklinks = (id) => mockResponse([]);
+export const fetchLinks = (id) => api.get(`/notes/${id}/links`);
+export const fetchBacklinks = (id) => api.get(`/notes/${id}/backlinks`);
 
 // ── Graph ──────────────────────────────────────────────────
-export const fetchGraphData = () => {
-  return mockResponse({ nodes: [], links: [] });
-};
+export const fetchGraphData = () => api.get('/graph');
 
-// Dummy axios instance to avoid errors if used directly
-export default axios.create();
+export default api;

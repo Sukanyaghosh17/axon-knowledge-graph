@@ -78,8 +78,8 @@ const NoteCard = ({ note, color, onClick }) => {
   );
 };
 
-const FolderCard = ({ name, color }) => (
-  <div className="dash-folder-card">
+const FolderCard = ({ name, color, onClick }) => (
+  <div className="dash-folder-card" onClick={onClick} style={{ cursor: 'pointer' }}>
     <div className="dash-folder-icon" style={{ background: color }}>
       <FolderOpen size={22} color="#fff" />
       <span className="dash-folder-initials">{getInitials(name)}</span>
@@ -145,7 +145,8 @@ const AppDashboard = () => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (n.title || '').toLowerCase().includes(q) ||
-             (n.content || '').toLowerCase().includes(q);
+             (n.content || '').toLowerCase().includes(q) ||
+             (n.tags || []).some(t => t.toLowerCase().includes(q));
     }
     const d = new Date(n.updatedAt);
     if (noteFilter === 'today') {
@@ -371,6 +372,7 @@ const AppDashboard = () => {
                     key={folder}
                     name={folder}
                     color={FOLDER_COLORS[i % FOLDER_COLORS.length]}
+                    onClick={() => setSearchQuery(folder)}
                   />
                 ))
               )}
