@@ -92,7 +92,7 @@
 /* Grid Layout */
 .planner-grid {
   display: grid;
-  grid-template-columns: 260px 1fr 340px;
+  grid-template-columns: 310px 1fr 340px;
   gap: 24px;
   align-items: start;
 }
@@ -185,6 +185,56 @@
   margin: 0;
 }
 
+.quote-edit-btn {
+  background: transparent;
+  border: 1px solid rgba(40, 54, 24, 0.15);
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: var(--olive-leaf);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.quote-edit-btn:hover {
+  background: #f0f4e4;
+  border-color: var(--olive-leaf);
+}
+
+.quote-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quote-edit-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd8b8;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--black-forest);
+  background: #fdfcf7;
+  resize: none;
+  box-sizing: border-box;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+.quote-edit-input:focus {
+  outline: none;
+  border-color: var(--olive-leaf);
+  box-shadow: 0 0 0 3px rgba(96, 108, 56, 0.1);
+}
+
+.quote-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 /* ── CENTER COLUMN ── */
 .welcome-banner {
   background: linear-gradient(135deg, var(--cornsilk), #f5f0d0);
@@ -252,6 +302,70 @@
   background: #ffffff;
   box-shadow: 0 8px 20px rgba(40, 54, 24, 0.08);
   border: 1px solid #ddd8b8;
+}
+
+.habit-goal {
+  font-size: 0.72rem;
+  color: var(--olive-leaf);
+  opacity: 0.8;
+  font-weight: 500;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* Progress bar on habit card */
+.habit-progress-bar {
+  width: 100%;
+  height: 9px;
+  background: rgba(40, 54, 24, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.habit-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.habit-pct {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--olive-leaf);
+  opacity: 0.75;
+}
+
+/* Modal progress bar */
+.habit-modal-progress {
+  width: 100%;
+  height: 8px;
+  background: rgba(40, 54, 24, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.habit-modal-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.habit-modal-pct {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--olive-leaf);
+  display: block;
+  margin-top: 4px;
+}
+
+.habit-form-hint {
+  font-size: 0.75rem;
+  color: var(--olive-leaf);
+  opacity: 0.7;
+  margin-left: 8px;
+  font-weight: 400;
 }
 
 .habit-icon {
@@ -591,7 +705,7 @@
 
 .notes-textarea {
   width: 100%;
-  height: 120px;
+  height: 48px;
   background: transparent;
   border: none;
   resize: none;
@@ -659,21 +773,26 @@
 }
 
 .tracker-name {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--black-forest);
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .tracker-days {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .tracker-dot {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 2px solid #c8c49a;
   background: transparent;
