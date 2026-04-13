@@ -156,17 +156,17 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
 }
 
 .fav-list li {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-size: 0.95rem;
   color: var(--olive-leaf);
   cursor: pointer;
-  padding: 8px;
+  padding: 6px 8px;
   border-radius: 8px;
   transition: all 0.2s ease;
 }
@@ -675,6 +675,25 @@
   font-size: 0.85rem;
   color: var(--black-forest);
   box-sizing: border-box;
+}
+
+.fav-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid rgba(40, 54, 24, 0.15);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--black-forest);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.fav-input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: var(--olive-leaf);
+  box-shadow: 0 0 0 2px rgba(96, 108, 56, 0.08);
 }
 
 .schedule-add-btn {

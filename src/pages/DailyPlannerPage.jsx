@@ -83,23 +83,35 @@ const DailyPlannerPage = () => {
   };
 
   const [favPages, setFavPages] = useState([
-    'Morning Routine',
-    'Reading List',
-    'Project Ideas',
-    'Weekly Reflection'
+    { id: 1, title: 'Morning Routine', url: '#' },
+    { id: 2, title: 'Reading List', url: '#' },
+    { id: 3, title: 'Project Ideas', url: '#' },
+    { id: 4, title: 'Weekly Reflection', url: '#' }
   ]);
   const [isEditingFavs, setIsEditingFavs] = useState(false);
-  const [newFavPage, setNewFavPage] = useState('');
+  const [newFavTitle, setNewFavTitle] = useState('');
+  const [newFavUrl, setNewFavUrl] = useState('');
 
   const addFavPage = () => {
-    if (newFavPage.trim()) {
-      setFavPages(prev => [...prev, newFavPage.trim()]);
-      setNewFavPage('');
+    if (newFavTitle.trim()) {
+      setFavPages(prev => [...prev, {
+        id: Date.now(),
+        title: newFavTitle.trim(),
+        url: newFavUrl.trim() || '#'
+      }]);
+      setNewFavTitle('');
+      setNewFavUrl('');
     }
   };
 
-  const removeFavPage = (index) => {
-    setFavPages(prev => prev.filter((_, i) => i !== index));
+  const updateFavPage = (id, field, value) => {
+    setFavPages(prev => prev.map(page => 
+      page.id === id ? { ...page, [field]: value } : page
+    ));
+  };
+
+  const removeFavPage = (id) => {
+    setFavPages(prev => prev.filter(page => page.id !== id));
   };
 
   const [habits, setHabits] = useState([
@@ -329,40 +341,78 @@ const DailyPlannerPage = () => {
                 <button
                   className="quote-edit-btn"
                   onClick={() => setIsEditingFavs(!isEditingFavs)}
-                  title="Edit Favourite Pages"
+                  title={isEditingFavs ? "Save Changes" : "Edit Favourite Pages"}
                 >
-                  <Pencil size={13} />
+                  {isEditingFavs ? <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>Save</span> : <Pencil size={13} />}
                 </button>
               </div>
 
               {isEditingFavs && (
-                <div className="schedule-add-form" style={{ marginBottom: '12px' }}>
+                <div className="schedule-add-form" style={{ marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '12px', borderBottom: '1px dashed rgba(40, 54, 24, 0.2)' }}>
                   <input
                     type="text"
-                    placeholder="New page link..."
-                    value={newFavPage}
-                    onChange={(e) => setNewFavPage(e.target.value)}
-                    className="schedule-input"
-                    onKeyDown={(e) => e.key === 'Enter' && addFavPage()}
+                    placeholder="Page Title..."
+                    value={newFavTitle}
+                    onChange={(e) => setNewFavTitle(e.target.value)}
+                    className="fav-input"
                   />
-                  <button className="schedule-add-btn" onClick={addFavPage}>Add</button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      placeholder="URL (e.g. https://...)"
+                      value={newFavUrl}
+                      onChange={(e) => setNewFavUrl(e.target.value)}
+                      className="fav-input"
+                      style={{ flex: 1 }}
+                      onKeyDown={(e) => e.key === 'Enter' && addFavPage()}
+                    />
+                    <button className="schedule-add-btn" onClick={addFavPage} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>Add</button>
+                  </div>
                 </div>
               )}
 
               <ul className="fav-list">
-                {favPages.map((page, idx) => (
-                  <li key={idx} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <LinkIcon size={14} /> {page}
-                    </span>
-                    {isEditingFavs && (
-                      <button 
-                        className="schedule-delete-btn"
-                        onClick={() => removeFavPage(idx)}
-                        title="Delete"
+                {favPages.map((page) => (
+                  <li key={page.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '0' }}>
+                    {isEditingFavs ? (
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '4px' }}>
+                           <input 
+                             type="text" 
+                             value={page.title} 
+                             onChange={(e) => updateFavPage(page.id, 'title', e.target.value)}
+                             className="fav-input" 
+                             placeholder="Title"
+                             style={{ fontWeight: 500 }}
+                           />
+                           <input 
+                             type="text" 
+                             value={page.url} 
+                             onChange={(e) => updateFavPage(page.id, 'url', e.target.value)}
+                             className="fav-input" 
+                             placeholder="URL"
+                             style={{ color: '#666', fontSize: '0.75rem' }}
+                           />
+                         </div>
+                         <button 
+                           className="schedule-delete-btn"
+                           onClick={() => removeFavPage(page.id)}
+                           title="Delete"
+                           style={{ alignSelf: 'flex-start', marginTop: '6px' }}
+                         >
+                           ✕
+                         </button>
+                      </div>
+                    ) : (
+                      <a 
+                        href={page.url} 
+                        target={page.url.startsWith('http') ? "_blank" : undefined} 
+                        rel="noopener noreferrer" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit', width: '100%', cursor: 'pointer' }}
+                        className="fav-page-link"
                       >
-                        ✕
-                      </button>
+                        <LinkIcon size={14} style={{ minWidth: '14px' }} /> <span style={{ wordBreak: 'break-word' }}>{page.title}</span>
+                      </a>
                     )}
                   </li>
                 ))}

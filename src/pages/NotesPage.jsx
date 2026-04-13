@@ -609,6 +609,12 @@ const NotesPage = () => {
   const [backlinks, setBacklinks]       = useState([]);
   const [versions, setVersions]         = useState([]);
   const [restoringIdx, setRestoringIdx] = useState(null);
+  const [toast, setToast]               = useState(null); // { msg, type: 'success'|'error' }
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const saveTimeout = useRef(null);
   const editorRef   = useRef(null);
@@ -682,14 +688,28 @@ const NotesPage = () => {
   }, [editorLoading]);
 
   /* ─── auto-save ────────────────────────────────────────── */
-  const handleSave = useCallback(async () => {
-    if (!activeNoteId || !dirty) return;
+  const handleSave = useCallback(async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!activeNoteId) return;
+
+    // Always read latest HTML from DOM to avoid stale state
+    const htmlContent = editorRef.current?.innerHTML || content;
+    // Also read title from the input element directly in case state is stale
+    const titleEl = document.querySelector('.editor-note-title');
+    const currentTitle =
+      (titleEl ? titleEl.value : null)?.trim() ||
+      title?.trim() ||
+      'Untitled';
+
     setSaving(true);
+    clearTimeout(saveTimeout.current);
+
     try {
-      const htmlContent = editorRef.current?.innerHTML || content;
-      await updateNote(activeNoteId, { title, content: htmlContent, tags });
+      await updateNote(activeNoteId, { title: currentTitle, content: htmlContent, tags });
       setContent(htmlContent);
+      setTitle(currentTitle);
       setDirty(false);
+      showToast('Note saved ✓');
       loadNotes();
       const [linksRes, backRes, versRes] = await Promise.all([
         fetchLinks(activeNoteId),
@@ -700,18 +720,57 @@ const NotesPage = () => {
       setBacklinks(backRes.data.data || []);
       setVersions(versRes.data.data || []);
     } catch (err) {
-      console.error('Save failed:', err);
+      console.error('Save error:', err.response?.status, err.message);
+
+      // Note lost (server restart wiped in-memory DB) — recreate it
+      if (err.response?.status === 404) {
+        try {
+          const safeTitle = currentTitle || 'Untitled';
+          const res = await createNote({ title: safeTitle, content: htmlContent, tags });
+          const newId = res.data.data._id;
+          setActiveNoteId(newId);
+          setSearchParams({ note: newId });
+          setContent(htmlContent);
+          setTitle(safeTitle);
+          setDirty(false);
+          showToast('Note recreated & saved ✓');
+          loadNotes();
+        } catch (createErr) {
+          console.error('Recreate failed:', createErr.response?.data, createErr.message);
+          showToast(
+            'Recreate failed: ' + (createErr.response?.data?.message || createErr.message),
+            'error'
+          );
+        }
+      } else {
+        showToast(
+          'Save failed: ' + (err.response?.data?.message || err.message),
+          'error'
+        );
+      }
     } finally {
       setSaving(false);
     }
-  }, [activeNoteId, dirty, title, content, tags]);
+  }, [activeNoteId, dirty, title, content, tags, loadNotes]);
 
   useEffect(() => {
     if (!dirty || !activeNoteId) return;
     clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(handleSave, 1500);
     return () => clearTimeout(saveTimeout.current);
-  }, [title, content, tags, dirty]);
+  }, [title, content, tags, dirty, handleSave]);
+
+  // Handle Ctrl+S for manual save
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (dirty) handleSave();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleSave, dirty]);
 
   const change = (fn) => { fn(); setDirty(true); };
 
@@ -788,6 +847,13 @@ const NotesPage = () => {
   /* ─── render ───────────────────────────────────────────── */
   return (
     <div className="notes-page">
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div className={`notes-toast ${toast.type === 'error' ? 'notes-toast-error' : 'notes-toast-success'}`}>
+          {toast.msg}
+        </div>
+      )}
 
       {/* ══ LEFT PANEL: Note list ══ */}
       <aside className="notes-list-panel">
@@ -931,11 +997,15 @@ const NotesPage = () => {
 
                 {/* Manual Save */}
                 <button
+                  type="button"
                   className="editor-btn primary"
                   onClick={handleSave}
-                  disabled={saving || !dirty}
+                  disabled={saving}
+                  title="Save (Ctrl+S)"
                 >
-                  <Save size={13} /> Save
+                  {saving
+                    ? <><div className="dash-spinner" style={{ width: 13, height: 13, borderWidth: 1.5 }} /> Saving…</>
+                    : <><Save size={13} /> Save</>}
                 </button>
 
                 {/* Delete Note */}
