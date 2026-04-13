@@ -60,7 +60,7 @@ const Features = () => {
                 </div>
                 <h3 className="feature-title">{feat.title}</h3>
                 <p className="feature-desc">{feat.desc}</p>
-                <Link to="/app" className="feature-btn">Try Now</Link>
+                <Link to={feat.id === 2 ? "/planner" : "/app"} className="feature-btn">Try Now</Link>
               </div>
 
               <div className="feature-card-wrapper">

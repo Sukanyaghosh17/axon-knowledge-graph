@@ -3,7 +3,7 @@
 /* Full page — transparent yellow background */
 .signup-root {
   min-height: 100vh;
-  background: rgba(255, 130, 30, 0.18);
+  background: rgba(188, 108, 37, 0.14); /* copperwood tint */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -23,7 +23,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: 0 20px 60px rgba(200, 140, 30, 0.22), 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 20px 60px rgba(96, 108, 56, 0.22), 0 6px 18px rgba(0,0,0,0.08);
   animation: slideUp .45s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: flex-start;
@@ -89,8 +89,8 @@
 }
 
 .input-wrapper:focus-within {
-  border-color: rgba(240, 140, 60, 0.4);
-  box-shadow: 0 4px 20px rgba(240, 140, 60, 0.12);
+  border-color: rgba(188, 108, 37, 0.4);
+  box-shadow: 0 4px 20px rgba(188, 108, 37, 0.14);
   background: rgba(255, 255, 255, 0.96);
 }
 
@@ -126,12 +126,12 @@
 .submit-btn {
   width: 100%;
   border-radius: 40px;
-  background: linear-gradient(90deg, #f09030, #f4b840);
+  background: linear-gradient(90deg, var(--copperwood), var(--sunlit-clay));
   color: white;
   font-weight: 800;
   font-size: 21px;
   padding: 17px;
-  box-shadow: 0 8px 22px rgba(230, 140, 40, 0.28);
+  box-shadow: 0 8px 22px rgba(188, 108, 37, 0.28);
   border: none;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -140,7 +140,7 @@
 
 .submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(230, 140, 40, 0.38);
+  box-shadow: 0 12px 28px rgba(188, 108, 37, 0.40);
 }
 
 /* Footer link */

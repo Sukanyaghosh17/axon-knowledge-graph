@@ -175,7 +175,7 @@ const AppDashboard = () => {
           </div>
           <div className="dash-brand-info" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <span className="dash-brand-name">Axon</span>
-            <span className="dash-brand-sub">Knowledge Graph</span>
+            <span className="dash-brand-sub">Your workspace</span>
           </div>
           <button className="dash-brand-toggle" onClick={toggleTheme} title="Toggle theme">
             {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}

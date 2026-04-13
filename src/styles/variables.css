@@ -8,31 +8,39 @@
 
 /* ── Light Mode (default) ────────────────────────────────── */
 :root {
-  /* Colors */
-  --accent:          #F97316;
-  --accent-hover:    #EA580C;
-  --accent-soft:     #FDBA74;
-  
-  --bg:              #F5F5F4;
-  --surface:         #FFFFFF;
-  --surface-2:       #FAFAF9;
-  
-  --text-primary:    #1C1917;
-  --text-secondary:  #44403C;
-  --text-muted:      #78716C;
-  
-  --border:          #E7E5E4;
-  --border-strong:   #D6D3D1;
-  
-  --highlight:       rgba(249, 115, 22, 0.1);
+  /* ── Palette ─────────────────────────────────────────────── */
+  --olive-leaf:      #606c38;
+  --black-forest:    #283618;
+  --cornsilk:        #fefae0;
+  --sunlit-clay:     #dda15e;
+  --copperwood:      #bc6c25;
+
+  /* ── Semantic Tokens ─────────────────────────────────────── */
+  --accent:          var(--copperwood);   /* #bc6c25 */
+  --accent-hover:    #a35e20;
+  --accent-soft:     var(--sunlit-clay);  /* #dda15e */
+  --accent-rgb:      188, 108, 37;
+
+  --bg:              var(--cornsilk);     /* #fefae0 */
+  --surface:         #ffffff;
+  --surface-2:       #fdf8ed;
+
+  --text-primary:    var(--black-forest); /* #283618 */
+  --text-secondary:  var(--olive-leaf);   /* #606c38 */
+  --text-muted:      #8a8f6c;
+
+  --border:          #ddd8b8;
+  --border-strong:   #c8c49a;
+
+  --highlight:       rgba(188, 108, 37, 0.1);
   --danger:          #EF4444;
-  --success:         #10B981;
-  --warning:         #F59E0B;
+  --success:         #4d7c3a;
+  --warning:         #dda15e;
 
   /* Elevation */
-  --shadow-sm:       0 1px 2px rgba(28, 25, 23, 0.05);
-  --shadow-md:       0 4px 12px rgba(28, 25, 23, 0.08);
-  --shadow-lg:       0 12px 24px rgba(28, 25, 23, 0.12);
+  --shadow-sm:       0 1px 2px rgba(40, 54, 24, 0.06);
+  --shadow-md:       0 4px 12px rgba(40, 54, 24, 0.10);
+  --shadow-lg:       0 12px 24px rgba(40, 54, 24, 0.14);
 
   /* Radius & Spacing */
   --radius-sm:       6px;
@@ -48,21 +56,22 @@
   --navbar-height:   56px;
 }
 
-/* ── Warm Dark Mode ──────────────────────────────────────── */
+/* ── Forest Dark Mode ────────────────────────────────────── */
 [data-theme="dark"] {
-  --bg:              #1C1917;
-  --surface:         #292524;
-  --surface-2:       #44403C;
-  --text-primary:    #FAFAF9;
-  --text-secondary:  #D6D3D1;
-  --text-muted:      #A8A29E;
-  --accent:          #FB923C;
-  --accent-soft:     #FDBA74;
-  --highlight:       rgba(251, 146, 60, 0.15);
-  --border:          #44403C;
-  --border-strong:   #57534E;
+  --bg:              #1a1e0e;
+  --surface:         #222914;
+  --surface-2:       #2e3818;
+  --text-primary:    #fefae0;
+  --text-secondary:  #c8d4a0;
+  --text-muted:      #8a9e6a;
+  --accent:          var(--sunlit-clay);  /* #dda15e in dark */
+  --accent-hover:    #ca8a48;
+  --accent-soft:     #e8b87a;
+  --highlight:       rgba(221, 161, 94, 0.15);
+  --border:          #3a4520;
+  --border-strong:   #4d5c2a;
 
-  --shadow-sm:       0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md:       0 4px 12px rgba(0,0,0,0.4);
-  --shadow-lg:       0 12px 24px rgba(0,0,0,0.5);
+  --shadow-sm:       0 1px 3px rgba(0,0,0,0.35);
+  --shadow-md:       0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg:       0 12px 24px rgba(0,0,0,0.55);
 }

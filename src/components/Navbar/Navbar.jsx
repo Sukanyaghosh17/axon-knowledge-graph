@@ -1,4 +1,4 @@
-import { Sun, Moon, GitBranch, Search, X } from 'lucide-react';
+import { Sun, Moon, Search, X } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -92,13 +92,6 @@ const Navbar = () => {
 
       {/* Actions */}
       <div className="navbar-actions">
-        <button
-          id="graph-view-btn"
-          className="btn btn-ghost btn-sm"
-          onClick={() => navigate('/graph')}
-        >
-          <GitBranch size={15} /> Graph
-        </button>
         <button
           id="theme-toggle-btn"
           className="btn-icon"

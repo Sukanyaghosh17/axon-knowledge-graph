@@ -23,7 +23,5 @@ export const restoreVersion = (id, versionIndex) => api.post(`/notes/${id}/resto
 export const fetchLinks = (id) => api.get(`/notes/${id}/links`);
 export const fetchBacklinks = (id) => api.get(`/notes/${id}/backlinks`);
 
-// ── Graph ──────────────────────────────────────────────────
-export const fetchGraphData = () => api.get('/graph');
 
 export default api;

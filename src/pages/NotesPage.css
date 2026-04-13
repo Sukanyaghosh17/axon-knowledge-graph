@@ -167,7 +167,7 @@
 .notes-list-search-input:focus {
   border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+  box-shadow: 0 0 0 2px rgba(188, 108, 37, 0.12);
 }
 
 /* Note items */

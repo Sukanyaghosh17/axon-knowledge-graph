@@ -5,8 +5,8 @@ import LandingPage from './pages/LandingPage';
 import FeaturesPage from './pages/FeaturesPage';
 import ContactPage from './pages/ContactPage';
 import NotesPage from './pages/NotesPage';
-import GraphPage from './pages/GraphPage';
 import AppDashboard from './pages/AppDashboard';
+import DailyPlannerPage from './pages/DailyPlannerPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 import './styles/global.css';
@@ -34,9 +34,7 @@ const App = () => {
           <Route path="/app" element={<AppDashboard />} />
           {/* Editor — full-screen three-panel layout */}
           <Route path="/app/edit" element={<NotesPage />} />
-          <Route element={<MainLayout />}>
-            <Route path="/graph" element={<GraphPage />} />
-          </Route>
+          <Route path="/planner" element={<DailyPlannerPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>
