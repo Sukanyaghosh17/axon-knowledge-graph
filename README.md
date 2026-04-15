@@ -128,7 +128,6 @@ App opens at `http://localhost:5173`
 ## 🛠 Tech Stack
 
 - **Frontend**: React 18, Vite, React Router v6, React Flow, react-markdown, Lucide Icons
-- **Backend**: Node.js, Express 5, Mongoose
 - **Database**: MongoDB
 
 ---
@@ -141,3 +140,29 @@ App opens at `http://localhost:5173`
 4. **Auto-save**: Notes save automatically 1.5 seconds after you stop typing
 5. **Search**: Use the search bar in the navbar — results update as you type
 6. **Tags**: Press `Enter` or `,` in the tag field to add tags; click `×` to remove
+
+---
+
+## 🚀 Vercel Deployment
+
+This repository is optimized to be deployed to **Vercel** with a monolithic setup. The React frontend and the Express Node.js API (serverless functions) run together smoothly.
+
+### 1. Prerequisites
+- Create a [MongoDB Atlas](https://cloud.mongodb.com/) cluster (free tier is fine).
+- Get your connection URI, and ensure network IP access is set to `0.0.0.0/0` (Allow access from anywhere).
+
+### 2. Import to Vercel
+1. Push this project to a GitHub repository.
+2. Log in to your [Vercel account](https://vercel.com/) and click **Add New Project**.
+3. Import your GitHub repository.
+
+### 3. Vercel Configuration
+In your project settings on Vercel, ensure the following is set:
+- **Framework Preset**: Vite
+- **Root Directory**: `./` (Default root)
+- **Environment Variables**:
+  - `MONGO_URI`: `mongodb+srv://<user>:<password>@cluster0...`
+
+### 4. Deploy!
+Click **Deploy**! The `vercel.json` file automatically handles routing API requests to your Node.js backend.
+

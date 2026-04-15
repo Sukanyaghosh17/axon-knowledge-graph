@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Settings, Plus, Search, Archive, Folder, HelpCircle,
   ChevronDown, ChevronUp, Moon, Sun, Download, Upload,
   LogOut, User, Lightbulb, CheckCircle2, BookOpen,
-  Monitor, Palette, Info, ExternalLink
+  Monitor, Palette, Info, ExternalLink, Save
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import './SettingsPage.css';
@@ -20,7 +20,6 @@ const Sidebar = ({ navigate }) => {
 
   return (
     <aside className="settings-sidebar">
-      {/* Brand */}
       <div className="settings-brand">
         <div className="settings-brand-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src="/Logo.png" alt="Axon" className="settings-brand-logo-img" />
@@ -34,22 +33,20 @@ const Sidebar = ({ navigate }) => {
         </button>
       </div>
 
-      {/* Primary Actions */}
       <div className="settings-sidebar-actions">
         <button className="settings-action-btn settings-action-primary" onClick={() => navigate('/app/edit')}>
-          <Plus size={15} /><span>Create Note</span><span className="settings-shortcut">⌘N</span>
+          <Plus size={15} /><span>Create Note</span>
         </button>
         <button className="settings-action-btn" onClick={() => navigate('/app')}>
-          <Search size={15} /><span>Search</span><span className="settings-shortcut">⌘S</span>
+          <Search size={15} /><span>Search</span>
         </button>
         <button className="settings-action-btn" onClick={() => navigate('/app')}>
-          <Archive size={15} /><span>Archives</span><span className="settings-shortcut">⌘R</span>
+          <Archive size={15} /><span>Archives</span>
         </button>
       </div>
 
       <div className="settings-divider" />
 
-      {/* Folders */}
       <div className="settings-sidebar-folders">
         <div className="settings-folders-header">
           <div className="settings-folders-title">
@@ -78,7 +75,6 @@ const Sidebar = ({ navigate }) => {
         )}
       </div>
 
-      {/* Footer */}
       <div className="settings-sidebar-footer">
         <button className="settings-footer-btn" onClick={() => navigate('/contact')}>
           <HelpCircle size={15} /><span>Help</span>
@@ -92,17 +88,30 @@ const Sidebar = ({ navigate }) => {
 };
 
 /* ── General Tab ─────────────────────────────────────────── */
-const GeneralTab = () => {
-  const [workspaceName, setWorkspaceName] = useState('Axon');
-  const [saved, setSaved] = useState(false);
+const GeneralTab = ({ settings, setSettings }) => {
+  const fileInputRef = useRef(null);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const getAvatarUrl = () => {
+    if (settings.customAvatar) return settings.customAvatar;
+    if (settings.gender === 'Male') return '/avtar_Male.png';
+    if (settings.gender === 'Female') return '/avtar_Female.png';
+    return '/avtar_others.png';
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setSettings({ ...settings, customAvatar: url });
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setSettings({ ...settings, customAvatar: null, gender: 'Other' });
   };
 
   const handleExport = () => {
-    const data = { workspace: workspaceName, exported: new Date().toISOString() };
+    const data = { workspace: settings.workspaceName, exported: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -112,23 +121,16 @@ const GeneralTab = () => {
 
   return (
     <div className="settings-tab-content">
-      {/* Workspace Section */}
       <section className="settings-section">
         <h2 className="settings-section-title">Workspace</h2>
         <div className="settings-field">
           <label className="settings-label">Workspace Name</label>
           <input
             className="settings-input"
-            value={workspaceName}
-            onChange={e => setWorkspaceName(e.target.value)}
+            value={settings.workspaceName}
+            onChange={e => setSettings({ ...settings, workspaceName: e.target.value })}
           />
         </div>
-        <button className="settings-btn-outline" onClick={handleSave}>
-          {saved ? '✓ Saved' : 'Save Changes'}
-        </button>
-
-        <div className="settings-field-gap" />
-
         <div className="settings-field">
           <label className="settings-label">Export Notes</label>
           <p className="settings-field-desc">Export and backup all your notes.</p>
@@ -138,20 +140,37 @@ const GeneralTab = () => {
         </div>
       </section>
 
-      {/* Account Section */}
       <section className="settings-section">
         <h2 className="settings-section-title">Account</h2>
-
         <div className="settings-profile-row">
           <div className="settings-avatar">
-            <img src="/Logo.png" alt="Profile" className="settings-avatar-img" />
+            <img src={getAvatarUrl()} alt="Profile" className="settings-avatar-img" />
           </div>
           <div className="settings-profile-actions">
             <p className="settings-label">Profile Picture</p>
-            <button className="settings-btn-outline small">
+            <div className="settings-gender-row" style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              {['Male', 'Female', 'Other'].map(g => (
+                <button
+                  key={g}
+                  className={`settings-font-btn ${settings.gender === g && !settings.customAvatar ? 'active' : ''}`}
+                  onClick={() => setSettings({ ...settings, gender: g, customAvatar: null })}
+                  style={{ fontSize: '0.7rem', padding: '4px 10px' }}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+              accept="image/*"
+            />
+            <button className="settings-btn-outline small" onClick={() => fileInputRef.current.click()}>
               <Upload size={13} /> Upload New Picture
             </button>
-            <button className="settings-link-btn">Remove</button>
+            <button className="settings-link-btn" onClick={handleRemoveAvatar}>Remove</button>
           </div>
         </div>
 
@@ -159,15 +178,14 @@ const GeneralTab = () => {
           <label className="settings-label">Email</label>
           <input
             className="settings-input"
-            defaultValue="axon@example.com"
+            value={settings.email}
             type="email"
+            readOnly
+            style={{ opacity: 0.7, cursor: 'not-allowed' }}
           />
         </div>
 
         <div className="settings-actions-row">
-          <button className="settings-btn-outline">
-            <User size={14} /> Account Settings
-          </button>
           <button className="settings-btn-danger">
             <LogOut size={14} /> Log Out
           </button>
@@ -178,26 +196,13 @@ const GeneralTab = () => {
 };
 
 /* ── Appearance Tab ──────────────────────────────────────── */
-const AppearanceTab = () => {
+const AppearanceTab = ({ settings, setSettings }) => {
   const { theme, toggleTheme } = useTheme();
-  const [accent, setAccent] = useState('#bc6c25');
-  const [fontSize, setFontSize] = useState('medium');
-
-  const ACCENTS = [
-    { label: 'Copper', value: '#bc6c25' },
-    { label: 'Olive',  value: '#606c38' },
-    { label: 'Forest', value: '#283618' },
-    { label: 'Indigo', value: '#4338ca' },
-    { label: 'Rose',   value: '#e11d48' },
-    { label: 'Teal',   value: '#0d9488' },
-  ];
 
   return (
     <div className="settings-tab-content">
       <section className="settings-section">
         <h2 className="settings-section-title">Appearance</h2>
-
-        {/* Theme */}
         <div className="settings-field">
           <label className="settings-label">Color Mode</label>
           <div className="settings-theme-row">
@@ -218,37 +223,6 @@ const AppearanceTab = () => {
           </div>
         </div>
 
-        {/* Accent */}
-        <div className="settings-field">
-          <label className="settings-label">Accent Color</label>
-          <div className="settings-accent-row">
-            {ACCENTS.map(a => (
-              <button
-                key={a.value}
-                className={`settings-accent-dot ${accent === a.value ? 'active' : ''}`}
-                style={{ background: a.value }}
-                title={a.label}
-                onClick={() => setAccent(a.value)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Font size */}
-        <div className="settings-field">
-          <label className="settings-label">Editor Font Size</label>
-          <div className="settings-font-row">
-            {['small', 'medium', 'large'].map(s => (
-              <button
-                key={s}
-                className={`settings-font-btn ${fontSize === s ? 'active' : ''}`}
-                onClick={() => setFontSize(s)}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
       </section>
     </div>
   );
@@ -292,23 +266,53 @@ const TABS = [
   { id: 'about',      label: 'About',      Icon: Info     },
 ];
 
+const DEFAULT_SETTINGS = {
+  workspaceName: 'Axon',
+  gender: 'Other',
+  customAvatar: null,
+  email: 'axon@example.com',
+  accent: '#bc6c25',
+  fontSize: 'medium'
+};
+
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('general');
+
+  // Load from localStorage or use defaults
+  const [initialSettings, setInitialSettings] = useState(() => {
+    const saved = localStorage.getItem('axon-user-settings');
+    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+  });
+
+  const [currentSettings, setCurrentSettings] = useState(initialSettings);
+
+  const isDirty = useMemo(() => {
+    return JSON.stringify(initialSettings) !== JSON.stringify(currentSettings);
+  }, [initialSettings, currentSettings]);
+
+  const handleSave = () => {
+    localStorage.setItem('axon-user-settings', JSON.stringify(currentSettings));
+    setInitialSettings(currentSettings);
+    // Optionally navigate away or show toast
+  };
+
+  const handleCancel = () => {
+    setCurrentSettings(initialSettings);
+    navigate('/app');
+  };
 
   return (
     <div className="settings-root">
       <Sidebar navigate={navigate} />
 
       <main className="settings-main">
-        {/* Header */}
         <div className="settings-header">
           <Settings size={22} className="settings-header-icon" />
           <h1 className="settings-header-title">Settings</h1>
         </div>
 
         <div className="settings-body">
-          {/* Sub-nav */}
           <nav className="settings-subnav">
             {TABS.map(({ id, label, Icon }) => (
               <button
@@ -321,7 +325,6 @@ const SettingsPage = () => {
               </button>
             ))}
 
-            {/* Footer info */}
             <div className="settings-subnav-footer">
               <span className="settings-subnav-version">
                 <strong>Axon</strong> 1.0.0
@@ -331,13 +334,55 @@ const SettingsPage = () => {
             </div>
           </nav>
 
-          {/* Content */}
           <div className="settings-content">
-            {activeTab === 'general'    && <GeneralTab />}
-            {activeTab === 'appearance' && <AppearanceTab />}
+            {activeTab === 'general'    && <GeneralTab settings={currentSettings} setSettings={setCurrentSettings} />}
+            {activeTab === 'appearance' && <AppearanceTab settings={currentSettings} setSettings={setCurrentSettings} />}
             {activeTab === 'about'      && <AboutTab />}
 
-            {/* Decorative illustration */}
+            {activeTab === 'general' && (
+              <div className="settings-footer-actions" style={{ 
+                marginTop: '40px', 
+                paddingTop: '20px', 
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-start'
+              }}>
+                <button 
+                  disabled={!isDirty}
+                  style={{ 
+                    padding: '6px 14px', 
+                    borderRadius: '4px', 
+                    fontSize: '0.8rem', 
+                    background: isDirty ? '#f1f1f1' : '#f9f9f9', 
+                    border: '1px solid #d1d1d1',
+                    color: isDirty ? '#444' : '#bbb',
+                    cursor: isDirty ? 'pointer' : 'not-allowed',
+                    fontWeight: 500,
+                    opacity: isDirty ? 1 : 0.6
+                  }} 
+                  onClick={handleSave}
+                >
+                  Save Changes
+                </button>
+                <button 
+                  style={{ 
+                    padding: '6px 14px', 
+                    borderRadius: '4px', 
+                    fontSize: '0.8rem', 
+                    background: '#f1f1f1', 
+                    border: '1px solid #d1d1d1',
+                    color: '#444',
+                    cursor: 'pointer',
+                    fontWeight: 500
+                  }} 
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+
             <div className="settings-illustration">
               <img src="/Book.png" alt="" className="settings-illus-img" />
             </div>

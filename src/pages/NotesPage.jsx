@@ -596,9 +596,28 @@ const NotesPage = () => {
   const [content, setContent]           = useState('');
   const [tags, setTags]                 = useState([]);
   const [tagInput, setTagInput]         = useState('');
+  const [externalLinks, setExternalLinks] = useState([]);
+  const [extTitle, setExtTitle]         = useState('');
+  const [extUrl, setExtUrl]           = useState('');
   const [saving, setSaving]             = useState(false);
   const [dirty, setDirty]               = useState(false);
   const [editorLoading, setEditorLoading] = useState(false);
+
+  const [suggestedTags, setSuggestedTags] = useState(() => {
+    try {
+      const saved = localStorage.getItem('axon-suggested-tags');
+      return saved ? JSON.parse(saved) : ['draft', 'new_ideas', 'content', 'port creating'];
+    } catch {
+      return ['draft', 'new_ideas', 'content', 'port creating'];
+    }
+  });
+
+  const removeSuggestedTag = (e, t) => {
+    e.stopPropagation();
+    const nextTags = suggestedTags.filter(st => st !== t);
+    setSuggestedTags(nextTags);
+    localStorage.setItem('axon-suggested-tags', JSON.stringify(nextTags));
+  };
 
   // ── Toolbar state ──
   const [font, setFont]         = useState('Sans Serif');
@@ -610,6 +629,10 @@ const NotesPage = () => {
   const [versions, setVersions]         = useState([]);
   const [restoringIdx, setRestoringIdx] = useState(null);
   const [toast, setToast]               = useState(null); // { msg, type: 'success'|'error' }
+
+  // ── Linking state ──
+  const [isLinking, setIsLinking]           = useState(false);
+  const [noteSearch, setNoteSearch]         = useState('');
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -663,6 +686,7 @@ const NotesPage = () => {
       setTitle(n.title);
       setContent(n.content);
       setTags(n.tags || []);
+      setExternalLinks(n.externalLinks || []);
       setLinks(linksRes.data.data || []);
       setBacklinks(backRes.data.data || []);
       setVersions(versRes.data.data || []);
@@ -705,7 +729,7 @@ const NotesPage = () => {
     clearTimeout(saveTimeout.current);
 
     try {
-      await updateNote(activeNoteId, { title: currentTitle, content: htmlContent, tags });
+      await updateNote(activeNoteId, { title: currentTitle, content: htmlContent, tags, externalLinks });
       setContent(htmlContent);
       setTitle(currentTitle);
       setDirty(false);
@@ -726,7 +750,7 @@ const NotesPage = () => {
       if (err.response?.status === 404) {
         try {
           const safeTitle = currentTitle || 'Untitled';
-          const res = await createNote({ title: safeTitle, content: htmlContent, tags });
+          const res = await createNote({ title: safeTitle, content: htmlContent, tags, externalLinks });
           const newId = res.data.data._id;
           setActiveNoteId(newId);
           setSearchParams({ note: newId });
@@ -833,6 +857,41 @@ const NotesPage = () => {
     } finally {
       setRestoringIdx(null);
     }
+  };
+
+  /* ─── reverse filtered for linking ─── */
+  const otherNotes = notes.filter(n => n._id !== activeNoteId);
+  const linkMatches = noteSearch
+    ? otherNotes.filter(n => (n.title || '').toLowerCase().includes(noteSearch.toLowerCase()))
+    : [];
+
+  const insertNoteLink = (note) => {
+    if (!editorRef.current) return;
+    const linkText = ` [[${note.title}]] `;
+    
+    // Focus and insert at end for simplicity, or we could use Range API
+    editorRef.current.focus();
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (editorRef.current.contains(range.startContainer)) {
+        const textNode = document.createTextNode(linkText);
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        editorRef.current.innerHTML += linkText;
+      }
+    } else {
+      editorRef.current.innerHTML += linkText;
+    }
+    
+    handleEditorInput();
+    setIsLinking(false);
+    setNoteSearch('');
+    showToast(`Linked to ${note.title}`);
   };
 
   /* ─── filtered notes ───────────────────────────────────── */
@@ -1048,24 +1107,54 @@ const NotesPage = () => {
                 onChange={(e) => change(() => setTitle(e.target.value))}
                 placeholder="Title"
               />
-              {/* Tags */}
-              <div className="editor-tags-row">
-                <Tag size={12} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                {tags.map((t) => (
-                  <span key={t} className="editor-tag-chip">
-                    {t}
-                    <button className="editor-tag-remove" onClick={() => change(() => setTags((p) => p.filter((x) => x !== t)))}>
-                      <X size={9} />
-                    </button>
-                  </span>
-                ))}
-                <input
-                  className="editor-tag-input"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={addTag}
-                  placeholder="Add tag…"
-                />
+              {/* Tags Section */}
+              <div className="editor-tags-section" style={{ marginBottom: '16px' }}>
+                <div className="editor-tags-label" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-primary)', marginBottom: '8px', paddingLeft: '2px', fontWeight: 500 }}>
+                  <Tag size={13} style={{ color: 'var(--text-muted)' }} />
+                  <input
+                    className="editor-tag-input"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={addTag}
+                    placeholder="Add tag..."
+                    style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '0.78rem', color: 'var(--text-primary)', fontWeight: 500, width: '100%' }}
+                  />
+                </div>
+                <div className="editor-tags-row">
+                  {/* Default / Suggested tags */}
+                  {suggestedTags.map((defaultTag) => (
+                    !tags.includes(defaultTag) && (
+                      <span
+                        key={defaultTag}
+                        className="editor-tag-chip"
+                        onClick={() => change(() => setTags((p) => [...p, defaultTag]))}
+                        style={{ cursor: 'pointer', border: '1px solid rgba(188, 108, 37, 0.4)', padding: '4px 10px', background: 'var(--highlight)' }}
+                        title="Click to add tag"
+                      >
+                        #{defaultTag}
+                        <button
+                          className="editor-tag-remove"
+                          title="Remove suggested tag"
+                          onClick={(e) => removeSuggestedTag(e, defaultTag)}
+                          style={{ marginLeft: '2px' }}
+                        >
+                          <X size={9} />
+                        </button>
+                      </span>
+                    )
+                  ))}
+
+                  {/* Active tags */}
+                  {tags.map((t) => (
+                    <span key={t} className="editor-tag-chip" style={{ border: '1px solid rgba(188, 108, 37, 0.4)', padding: '4px 10px', background: 'var(--highlight)' }}>
+                      #{t}
+                      <button className="editor-tag-remove" onClick={() => change(() => setTags((p) => p.filter((x) => x !== t)))}>
+                        <X size={9} />
+                      </button>
+                    </span>
+                  ))}
+
+                </div>
               </div>
             </div>
 
@@ -1103,25 +1192,140 @@ const NotesPage = () => {
 
           {/* Linked notes */}
           <div className="right-panel-section">
-            <div className="right-panel-label">
-              <Link2 size={11} /> Links
+            <div className="right-panel-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Link2 size={11} /> Links
+              </span>
+              <button 
+                className="tb-btn" 
+                style={{ width: 18, height: 18 }} 
+                onClick={() => setIsLinking(!isLinking)}
+                title="Link a note"
+              >
+                <Plus size={12} />
+              </button>
             </div>
-            {links.length === 0
-              ? <span className="right-panel-empty">No outgoing links</span>
-              : links.map((l, i) =>
-                l.noteId ? (
-                  <button
-                    key={i}
-                    className="link-chip-new"
-                    onClick={() => openNote(l.noteId._id || l.noteId)}
+
+            {isLinking && (
+              <div className="link-search-box" style={{ margin: '12px 0 16px', position: 'relative' }}>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  <input
+                    className="notes-list-search-input"
+                    style={{ padding: '6px 12px', fontSize: '0.75rem', flex: 1, borderRadius: '16px', border: '1px solid rgba(188, 108, 37, 0.3)', background: 'var(--highlight)' }}
+                    placeholder="Search notes to link..."
+                    value={noteSearch}
+                    onChange={(e) => setNoteSearch(e.target.value)}
+                    autoFocus
+                  />
+                  <button 
+                    onClick={() => { setIsLinking(false); setNoteSearch(''); }}
+                    style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '0 4px' }}
+                    title="Cancel"
                   >
-                    {l.title}
+                    <X size={14} />
                   </button>
-                ) : (
-                  <span key={i} className="right-panel-empty">{l.title} (not found)</span>
-                )
+                </div>
+                {linkMatches.length > 0 && (
+                  <div className="link-results-dropdown" style={{ 
+                    position: 'absolute', top: '100%', left: 0, right: 0, 
+                    background: 'var(--surface)', border: '1px solid var(--border)', 
+                    borderRadius: '4px', zIndex: 10, maxHeight: '150px', overflowY: 'auto',
+                    boxShadow: 'var(--shadow-md)', marginTop: '4px'
+                  }}>
+                    {linkMatches.map(n => (
+                      <button 
+                        key={n._id}
+                        className="tb-dd-item"
+                        style={{ fontSize: '0.75rem', padding: '6px 8px' }}
+                        onClick={() => insertNoteLink(n)}
+                      >
+                        {n.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {noteSearch && linkMatches.length === 0 && (
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', padding: '4px 8px' }}>
+                    No notes found
+                  </div>
+                )}
+              </div>
+            )}
+
+            {links.length === 0 && externalLinks.length === 0
+              ? <span className="right-panel-empty">No outgoing links</span>
+              : (
+                <>
+                  {/* Internal */}
+                  {links.map((l, i) =>
+                    l.noteId ? (
+                      <button
+                        key={`int-${i}`}
+                        className="link-chip-new"
+                        onClick={() => openNote(l.noteId._id || l.noteId)}
+                      >
+                        {l.title}
+                      </button>
+                    ) : (
+                      <span key={`int-err-${i}`} className="right-panel-empty">{l.title} (not found)</span>
+                    )
+                  )}
+                  {/* External */}
+                  {externalLinks.map((l, i) => (
+                    <div key={`ext-${i}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                       <a
+                        href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="link-chip-new"
+                        style={{ borderStyle: 'dashed', color: 'var(--accent)', flex: 1 }}
+                      >
+                        {l.title}
+                      </a>
+                      <button 
+                        onClick={() => change(() => setExternalLinks(prev => prev.filter((_, idx) => idx !== i)))}
+                        style={{ border: 'none', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', padding: '0 4px' }}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </>
               )
             }
+
+            {/* Manual External Link Form */}
+            <div style={{ marginTop: '16px', padding: '12px', border: '1px dashed rgba(188, 108, 37, 0.4)', borderRadius: '12px', background: 'var(--highlight)' }}>
+              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 600, letterSpacing: '0.05em' }}>ADD WEB LINK</div>
+              <input 
+                className="notes-list-search-input" 
+                style={{ width: '100%', padding: '6px 12px', fontSize: '0.75rem', marginBottom: '8px', borderRadius: '16px', border: '1px solid rgba(188, 108, 37, 0.2)', background: 'var(--bg)' }}
+                placeholder="Link Title (e.g. My Website)"
+                value={extTitle}
+                onChange={(e) => setExtTitle(e.target.value)}
+              />
+               <input 
+                className="notes-list-search-input" 
+                style={{ width: '100%', padding: '6px 12px', fontSize: '0.75rem', marginBottom: '12px', borderRadius: '16px', border: '1px solid rgba(188, 108, 37, 0.2)', background: 'var(--bg)' }}
+                placeholder="URL (e.g. google.com)"
+                value={extUrl}
+                onChange={(e) => setExtUrl(e.target.value)}
+              />
+              <button 
+                className="vh-restore-btn"
+                style={{ width: '100%', justifyContent: 'center', padding: '6px 12px', borderRadius: '16px', border: '1px solid rgba(188, 108, 37, 0.3)', background: 'transparent', color: 'var(--text-secondary)' }}
+                onClick={() => {
+                  if (extTitle && extUrl) {
+                    change(() => setExternalLinks(prev => [...prev, { title: extTitle, url: extUrl }]));
+                    setExtTitle('');
+                    setExtUrl('');
+                    showToast('Web link saved ✓');
+                  }
+                }}
+              >
+                <Save size={12} style={{ marginRight: '4px' }} /> Save Web Link
+              </button>
+            </div>
           </div>
 
           {/* Backlinks */}

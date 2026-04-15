@@ -1,13 +1,18 @@
 const mongoose = require('mongoose');
 
 const VersionSchema = new mongoose.Schema({
-  content: { type: String, required: true },
+  content: { type: String, default: '' },
   timestamp: { type: Date, default: Date.now },
 }, { _id: false });
 
 const LinkSchema = new mongoose.Schema({
   noteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Note' },
   title: { type: String },
+}, { _id: false });
+
+const ExternalLinkSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  url: { type: String, required: true },
 }, { _id: false });
 
 const NoteSchema = new mongoose.Schema(
@@ -28,6 +33,10 @@ const NoteSchema = new mongoose.Schema(
     },
     links: {
       type: [LinkSchema],
+      default: [],
+    },
+    externalLinks: {
+      type: [ExternalLinkSchema],
       default: [],
     },
     versions: {

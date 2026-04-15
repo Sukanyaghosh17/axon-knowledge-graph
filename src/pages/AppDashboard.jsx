@@ -4,9 +4,9 @@ import {
   Plus, Search, Archive, FolderOpen, HelpCircle, Settings,
   ChevronRight, ChevronLeft, PenSquare, Tag, Folder,
   ChevronDown, ChevronUp, Moon, Sun, X, CheckSquare, Square,
-  Lightbulb, CheckCircle2, BookOpen, Star, Lock, ArrowDown, UserCog, MoreHorizontal
+  Lightbulb, CheckCircle2, BookOpen, Star, Lock, ArrowDown, UserCog, MoreHorizontal, Trash2
 } from 'lucide-react';
-import { fetchAllNotes, createNote } from '../api';
+import { fetchAllNotes, createNote, deleteNote } from '../api';
 import { useTheme } from '../context/ThemeContext';
 import './AppDashboard.css';
 
@@ -38,7 +38,7 @@ const formatDate = (dateStr) => {
 };
 
 /* ── NoteCard ───────────────────────────────────────────────── */
-const NoteCard = ({ note, color, onClick }) => {
+const NoteCard = ({ note, color, onClick, onDelete }) => {
   const lines = (note.content || '')
     .replace(/[#*`_~\[\]]/g, '')
     .split('\n')
@@ -51,7 +51,29 @@ const NoteCard = ({ note, color, onClick }) => {
         <span className="dash-card-title" style={{ color: color.label }}>
           {note.title || 'Untitled'}
         </span>
-        <span className="dash-card-time">{formatTime(note.updatedAt)}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="dash-card-time">{formatTime(note.updatedAt)}</span>
+          <button
+            className="dash-card-delete-btn"
+            onClick={(e) => { e.stopPropagation(); onDelete(note._id); }}
+            title="Delete note"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: color.label,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              opacity: 0.6,
+              transition: 'opacity 0.2s',
+              padding: '2px'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+            onMouseOut={(e) => e.currentTarget.style.opacity = '0.6'}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
       <div className="dash-card-body">
         {lines.length > 0 ? (
@@ -153,6 +175,16 @@ const AppDashboard = () => {
 
   const handleOpenNote = (id) => navigate(`/app/edit?note=${id}`);
 
+  const handleDeleteNote = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this note?')) return;
+    try {
+      await deleteNote(id);
+      setNotes((prev) => prev.filter((n) => n._id !== id));
+    } catch (err) {
+      console.error('Failed to delete note:', err);
+    }
+  };
+
   /* derive folders from tags */
   const allFolders = [...new Set(notes.flatMap((n) => n.tags || []))].sort();
 
@@ -217,7 +249,6 @@ const AppDashboard = () => {
           >
             <Plus size={15} />
             <span>Create Note</span>
-            <span className="dash-shortcut">⌘N</span>
           </button>
 
           <button
@@ -226,7 +257,6 @@ const AppDashboard = () => {
           >
             <Search size={15} />
             <span>Search</span>
-            <span className="dash-shortcut">⌘S</span>
           </button>
 
           {showSearch && (
@@ -245,7 +275,6 @@ const AppDashboard = () => {
           >
             <Archive size={15} />
             <span>Archives</span>
-            <span className="dash-shortcut">⌘R</span>
           </button>
         </div>
 
@@ -379,6 +408,7 @@ const AppDashboard = () => {
                   note={note}
                   color={CARD_COLORS[i % CARD_COLORS.length]}
                   onClick={handleOpenNote}
+                  onDelete={handleDeleteNote}
                 />
               ))}
             </div>

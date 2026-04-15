@@ -48,7 +48,7 @@ const updateNote = async (req, res) => {
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ success: false, message: 'Note not found' });
 
-    const { title, content, tags } = req.body;
+    const { title, content, tags, externalLinks } = req.body;
 
     // Save current content as a version if content changed
     if (content !== undefined && content !== note.content) {
@@ -60,6 +60,7 @@ const updateNote = async (req, res) => {
     if (title !== undefined) note.title = title;
     if (content !== undefined) note.content = content;
     if (tags !== undefined) note.tags = tags;
+    if (externalLinks !== undefined) note.externalLinks = externalLinks;
 
     await note.save();
     await resolveLinks(note);
