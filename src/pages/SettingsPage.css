@@ -647,3 +647,60 @@
   transition: color var(--transition);
 }
 .settings-link-item:hover { color: var(--accent); }
+
+/* Footer Actions */
+.settings-footer-actions {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  animation: stFadeIn 0.3s ease;
+}
+
+.settings-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.settings-save-btn.dirty {
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(188, 108, 37, 0.2);
+}
+
+.settings-save-btn.dirty:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(188, 108, 37, 0.3);
+}
+
+.settings-cancel-btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settings-cancel-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--text-muted);
+}
