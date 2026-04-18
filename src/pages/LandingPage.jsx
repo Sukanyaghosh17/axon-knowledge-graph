@@ -5,14 +5,12 @@ const FEATURES = [
   { id: 'write-notes',  icon: '✍️', title: 'Write Notes',       desc: 'Rich text editor for all your thoughts',      iconBg: '#f5eed0' },
   { id: 'plan-day',     icon: '📅', title: 'Plan Your Day',     desc: 'Built-in daily planner to stay on track',    iconBg: '#e0ebcc' },
   { id: 'save-courses', icon: '📚', title: 'Save Courses',      desc: 'Bookmark and organise your learning',        iconBg: '#f5d9b0' },
-  { id: 'learn-facts',  icon: '🧠', title: 'Learn Facts',       desc: 'Retain key concepts effortlessly',           iconBg: '#d4e0b0' },
-  { id: 'class-notes',  icon: '🎓', title: 'Notes from Class',  desc: 'Capture lectures, never miss a thing',       iconBg: '#ece5f0' },
 ];
 
 const STEPS = [
-  { num: '01', icon: '🖊️', title: 'Write it down', desc: 'Capture notes, facts, and ideas using our beautiful rich-text editor — from class or anywhere.' },
+  { num: '01', icon: '🖊️', title: 'Write it down', desc: 'Capture notes and ideas using our beautiful rich-text editor.' },
   { num: '02', icon: '🗂️', title: 'Organise everything', desc: 'Tag notes, build folders, and plan your week with the built-in daily planner.' },
-  { num: '03', icon: '🚀', title: 'Learn & achieve', desc: 'Review saved courses, revisit class notes, and retain knowledge that actually sticks.' },
+  { num: '03', icon: '🚀', title: 'Learn & achieve', desc: 'Review saved courses, revisit your ideas, and retain knowledge that actually sticks.' },
 ];
 
 const LandingPage = () => {
@@ -47,7 +45,7 @@ const LandingPage = () => {
             elevate your thinking.
           </h1>
           <p className="landing-description">
-            Axon is your all-in-one study companion — capture class notes, plan your day, save courses, and learn smarter. Everything in one place, always connected.
+            Axon is your all-in-one study companion — capture notes, plan your day, save courses, and learn smarter. Everything in one place, always connected.
           </p>
           <Link to="/signup" className="landing-btn btn-cta">Start for Free →</Link>
         </div>

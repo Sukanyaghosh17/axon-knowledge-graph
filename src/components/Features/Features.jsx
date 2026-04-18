@@ -23,20 +23,6 @@ const featureData = [
     desc: "Easily collect and manage resources, links, and documents for all your active semesters.",
     icon: <BookMarked size={22} />,
     color: "#F97316",
-  },
-  {
-    id: 4,
-    title: "Learn facts",
-    desc: "Keep your mind sharp with structured notes. Reinforce your knowledge naturally.",
-    icon: <Brain size={22} />,
-    color: "#F97316",
-  },
-  {
-    id: 5,
-    title: "Notes from Class",
-    desc: "Never forget what your mentor says. Attach files, images, and links seamlessly inline.",
-    icon: <BookOpen size={22} />,
-    color: "#F97316",
   }
 ];
 
