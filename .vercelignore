@@ -1,0 +1,22 @@
+# Dev tooling
+api/node_modules
+node_modules
+
+# Local dev seeds / scripts
+api/seed.js
+
+# Environment files (never deploy secrets)
+.env
+api/.env
+api/.env.local
+
+# Editor and OS junk
+.vscode
+.idea
+.DS_Store
+*.suo
+*.njsproj
+*.sln
+
+# Source maps (optional — remove if you want them for debugging)
+dist/**/*.map

@@ -2,12 +2,15 @@
   "version": 2,
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
-  "installCommand": "npm install",
+  "installCommand": "npm install && npm install --prefix api --omit=dev",
   "functions": {
     "api/index.js": {
       "memory": 512,
       "maxDuration": 30
     }
+  },
+  "env": {
+    "NODE_ENV": "production"
   },
   "rewrites": [
     {

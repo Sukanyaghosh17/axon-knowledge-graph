@@ -14,7 +14,13 @@ const connectDB = async () => {
       }
 
       console.log('⏳ MONGO_URI not set. Starting MongoDB Memory Server for local dev...');
-      const { MongoMemoryServer } = require('mongodb-memory-server');
+      let MongoMemoryServer;
+      try {
+        ({ MongoMemoryServer } = require('mongodb-memory-server'));
+      } catch {
+        console.error('❌ mongodb-memory-server is not installed. Run: npm install --prefix api');
+        process.exit(1);
+      }
       const mongoServer = await MongoMemoryServer.create();
       mongoUri = mongoServer.getUri();
       console.log('✅ MongoDB Memory Server started');

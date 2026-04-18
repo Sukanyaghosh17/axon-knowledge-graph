@@ -66,7 +66,6 @@ const LandingPage = () => {
               <span className="lf-icon" style={{ background: f.iconBg }}>{f.icon}</span>
               <div className="lf-card-text">
                 <strong className="lf-card-title">{f.title}</strong>
-                <span className="lf-card-desc">{f.desc}</span>
               </div>
             </div>
           ))}
@@ -85,7 +84,6 @@ const LandingPage = () => {
                 <span className="hiw-step-icon">{s.icon}</span>
               </div>
               <h3 className="hiw-title">{s.title}</h3>
-              <p className="hiw-desc">{s.desc}</p>
             </div>
           ))}
         </div>

@@ -1,6 +1,6 @@
 # Axon — Where Ideas Flow 🧠
 
-A production-quality smart notes system with **version control**, **wikilinks**, and an interactive **knowledge graph**.
+A smart all-in-one study companion with **notes**, **version control**, **wikilinks**, **knowledge graph**, **daily planner**, and **course management**.
 
 ---
 
@@ -13,7 +13,9 @@ A production-quality smart notes system with **version control**, **wikilinks**,
 | 🔗 Wikilinks | `[[Note Title]]` links notes together automatically |
 | 🕸 Knowledge Graph | Interactive React Flow graph of all connections |
 | 🔍 Full-text Search | Debounced search across title + content |
-| 🎨 Theme System | Light/Dark mode, no flash on reload, localStorage persisted |
+| 🎨 Theme System | Light/Dark mode, no flash on reload |
+| 📅 Daily Planner | Plan and track your day |
+| 📚 Courses | Manage courses, semesters, and resources |
 
 ---
 
@@ -21,78 +23,71 @@ A production-quality smart notes system with **version control**, **wikilinks**,
 
 ```
 Axon/
-├── client/                  # React + Vite frontend
-│   ├── src/
-│   │   ├── api/             # Axios API layer
-│   │   ├── components/      # Navbar, Sidebar, Editor, VersionHistory, Graph
-│   │   ├── context/         # ThemeContext
-│   │   ├── pages/           # HomePage, GraphPage
-│   │   └── styles/          # variables.css, global.css
-│   └── vite.config.js
+├── api/                     # Node.js + Express backend (serverless on Vercel)
+│   ├── config/              # db.js — MongoDB connection
+│   ├── controllers/         # noteController, versionController, linkController
+│   ├── models/              # Note.js — Mongoose schema
+│   ├── routes/              # noteRoutes.js
+│   ├── utils/               # linkParser.js
+│   ├── seed.js              # Sample data seeder (dev only)
+│   └── index.js             # Express app entry point
 │
-└── server/                  # Node.js + Express backend
-    ├── config/              # db.js
-    ├── controllers/         # noteController, versionController, linkController
-    ├── models/              # Note.js
-    ├── routes/              # noteRoutes.js
-    ├── utils/               # linkParser.js
-    ├── seed.js              # Sample data seeder
-    └── index.js
+├── src/                     # React + Vite frontend
+│   ├── api/                 # Axios API layer
+│   ├── components/          # Navbar, Sidebar, Editor, Features, etc.
+│   ├── context/             # ThemeContext
+│   ├── pages/               # All page components
+│   └── styles/              # variables.css, global.css
+│
+├── public/                  # Static assets (Logo, images)
+├── index.html               # HTML entry point
+├── vite.config.js           # Vite config (proxies /api → localhost:5000 in dev)
+└── vercel.json              # Vercel deployment config
 ```
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Local Setup
 
 ### Prerequisites
-- Node.js 18+
-- MongoDB (local instance on port 27017, or Atlas URI)
+- Node.js 20+
+- (Optional) MongoDB local instance — the app uses an in-memory MongoDB automatically if `MONGO_URI` is not set
 
-### 1. Clone & install dependencies
+### 1. Install dependencies
 
 ```bash
-# Install backend dependencies
-cd server
+# Root (frontend)
 npm install
 
-# Install frontend dependencies
-cd ../client
-npm install
+# Backend
+npm install --prefix api
 ```
 
-### 2. Configure environment
+### 2. Configure environment (optional for local dev)
 
-`server/.env` is already pre-configured for local development:
-```
+The backend works out-of-the-box locally using an **in-memory MongoDB** — no setup needed.
+
+To use a real local or Atlas database, create `api/.env`:
+```env
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/axon
 CLIENT_URL=http://localhost:5173
+NODE_ENV=development
 ```
-Update `MONGO_URI` if using MongoDB Atlas.
 
-### 3. Seed sample data (optional but recommended)
+### 3. Start development servers
 
 ```bash
-cd server
-node seed.js
-```
-This inserts 6 interconnected notes with pre-resolved wikilinks.
-
-### 4. Start the backend
-
-```bash
-cd server
 npm run dev
 ```
-Server starts at `http://localhost:5000`
 
-### 5. Start the frontend
+This starts both the frontend (`http://localhost:5173`) and backend (`http://localhost:5000`) concurrently.
+
+### 4. Seed sample data (optional)
 
 ```bash
-cd client
-npm run dev
+node api/seed.js
 ```
-App opens at `http://localhost:5173`
 
 ---
 
@@ -111,58 +106,54 @@ App opens at `http://localhost:5173`
 | GET | `/api/notes/:id/links` | Outgoing wikilinks |
 | GET | `/api/notes/:id/backlinks` | Incoming backlinks |
 | GET | `/api/notes/graph` | Graph nodes + edges |
-
----
-
-## 🎨 Color Palette
-
-| Token | Light | Dark |
-|---|---|---|
-| Background | `#F0F7EE` | `#2E3440` |
-| Surface | `#FFFFFF` | `#3B4252` |
-| Accent | `#5E81AC` | `#88C0D0` |
-| Text | `#1A1A1A` | `#ECEFF4` |
+| GET | `/api/health` | Health check |
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Frontend**: React 18, Vite, React Router v6, React Flow, react-markdown, Lucide Icons
-- **Database**: MongoDB
-
----
-
-## 💡 Usage Tips
-
-1. **Wikilinks**: Type `[[Note Title]]` in any note's content to link it
-2. **Graph**: Click **Graph** in the navbar — node size reflects connection count
-3. **Version History**: Click **History** button while editing to see all past versions
-4. **Auto-save**: Notes save automatically 1.5 seconds after you stop typing
-5. **Search**: Use the search bar in the navbar — results update as you type
-6. **Tags**: Press `Enter` or `,` in the tag field to add tags; click `×` to remove
+- **Frontend**: React 19, Vite 8, React Router v7, React Flow, react-markdown, Lucide Icons, Axios
+- **Backend**: Node.js 20, Express 5, Mongoose 9
+- **Database**: MongoDB (Atlas for production, in-memory for local dev)
+- **Deployment**: Vercel (serverless)
 
 ---
 
 ## 🚀 Vercel Deployment
 
-This repository is optimized to be deployed to **Vercel** with a monolithic setup. The React frontend and the Express Node.js API (serverless functions) run together smoothly.
+### 1. Get a MongoDB Atlas URI
 
-### 1. Prerequisites
-- Create a [MongoDB Atlas](https://cloud.mongodb.com/) cluster (free tier is fine).
-- Get your connection URI, and ensure network IP access is set to `0.0.0.0/0` (Allow access from anywhere).
+1. Create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com)
+2. **Network Access → Add IP → Allow from anywhere** (`0.0.0.0/0`) — required for Vercel dynamic IPs
+3. Copy the connection string:
+   ```
+   mongodb+srv://user:password@cluster.mongodb.net/axon?retryWrites=true&w=majority
+   ```
 
-### 2. Import to Vercel
-1. Push this project to a GitHub repository.
-2. Log in to your [Vercel account](https://vercel.com/) and click **Add New Project**.
-3. Import your GitHub repository.
+### 2. Deploy
 
-### 3. Vercel Configuration
-In your project settings on Vercel, ensure the following is set:
-- **Framework Preset**: Vite
-- **Root Directory**: `./` (Default root)
-- **Environment Variables**:
-  - `MONGO_URI`: `mongodb+srv://<user>:<password>@cluster0...`
+**Option A — Vercel CLI:**
+```bash
+npm i -g vercel
+vercel --prod
+```
 
-### 4. Deploy!
-Click **Deploy**! The `vercel.json` file automatically handles routing API requests to your Node.js backend.
+**Option B — GitHub integration (recommended):**
+1. Push to GitHub
+2. Go to [vercel.com](https://vercel.com) → Import project
+3. Add environment variables (see below)
+4. Deploy
 
+### 3. Environment Variables (set in Vercel dashboard)
+
+| Variable | Value |
+|---|---|
+| `MONGO_URI` | Your Atlas connection string |
+| `CLIENT_URL` | `https://your-app.vercel.app` (optional) |
+
+`NODE_ENV=production` is automatically set via `vercel.json`.
+
+### 4. Verify
+
+- `https://your-app.vercel.app/api/health` → `{ "status": "OK" }`
+- `https://your-app.vercel.app/` → Landing page ✅

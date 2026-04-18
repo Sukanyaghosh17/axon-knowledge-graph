@@ -45,7 +45,6 @@ const Features = () => {
                   {feat.icon}
                 </div>
                 <h3 className="feature-title">{feat.title}</h3>
-                <p className="feature-desc">{feat.desc}</p>
                 <Link to={feat.id === 2 ? "/planner" : feat.id === 3 ? "/courses" : "/app"} className="feature-btn">Try Now</Link>
               </div>
 
