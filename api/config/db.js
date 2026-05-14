@@ -1,52 +1,67 @@
 const mongoose = require('mongoose');
 
-// Cache the connection promise across serverless invocations (Vercel re-uses warm instances)
-let cachedPromise = null;
+// MODULE-LEVEL state — Vercel reuses warm instances so this persists between requests
+let isConnecting = false;
+let isConnected = false;
 
 const connectDB = async () => {
-  // If already connected, reuse
-  if (mongoose.connection.readyState === 1) return;
+  // Already connected — fast path
+  if (isConnected && mongoose.connection.readyState === 1) return;
 
-  // If a connection is in progress, wait for it
-  if (cachedPromise) return cachedPromise;
+  // Connection already in progress — wait for it rather than opening a second socket
+  if (isConnecting) {
+    // Poll until done (max 10s)
+    for (let i = 0; i < 100; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      if (mongoose.connection.readyState === 1) { isConnected = true; return; }
+    }
+    throw new Error('MongoDB connection timed out while waiting for in-progress connect');
+  }
+
+  isConnecting = true;
 
   try {
     let mongoUri = process.env.MONGO_URI;
 
     if (!mongoUri) {
-      // In production (Vercel), MONGO_URI must be set — memory server won't work.
       if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-        console.error('❌ MONGO_URI environment variable is required in production.');
-        console.error('   Set it in your Vercel project → Settings → Environment Variables');
-        console.error('   Use a free MongoDB Atlas cluster: https://cloud.mongodb.com');
-        process.exit(1);
+        // DO NOT call process.exit() — it crashes the serverless worker and swallows the error.
+        // Throw instead so requireDB can return a clean 503.
+        throw new Error(
+          'MONGO_URI environment variable is not set. ' +
+          'Go to Vercel Dashboard → Your Project → Settings → Environment Variables ' +
+          'and add MONGO_URI with your MongoDB Atlas connection string.'
+        );
       }
 
-      console.log('⏳ MONGO_URI not set. Starting MongoDB Memory Server for local dev...');
+      // Local dev fallback — use in-memory MongoDB
+      console.log('⏳ MONGO_URI not set — starting MongoDB Memory Server for local dev...');
       let MongoMemoryServer;
       try {
         ({ MongoMemoryServer } = require('mongodb-memory-server'));
       } catch {
-        console.error('❌ mongodb-memory-server is not installed. Run: npm install --prefix api');
-        process.exit(1);
+        throw new Error('mongodb-memory-server is not installed. Run: npm install --prefix api');
       }
       const mongoServer = await MongoMemoryServer.create();
       mongoUri = mongoServer.getUri();
-      console.log('✅ MongoDB Memory Server started');
+      console.log('✅ MongoDB Memory Server started at', mongoUri);
     }
 
-    cachedPromise = mongoose.connect(mongoUri, {
-      // Recommended settings for serverless
+    await mongoose.connect(mongoUri, {
       bufferCommands: false,
-      maxPoolSize: 10,
+      maxPoolSize: 5,       // Atlas M0 free tier supports max 500 connections total
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 10000,
     });
 
-    const conn = await cachedPromise;
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    isConnected = true;
+    console.log('✅ MongoDB Connected:', mongoose.connection.host);
   } catch (error) {
-    cachedPromise = null; // allow retry on next request
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    throw error;
+    isConnected = false;
+    console.error('❌ MongoDB Connection Error:', error.message);
+    throw error;           // Let requireDB catch this and return 503
+  } finally {
+    isConnecting = false;
   }
 };
 

@@ -49,6 +49,9 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
+// Respond to CORS preflight immediately — no DB needed
+app.options('*', cors());
+
 // DB-ready gate: ensures API routes only run once MongoDB is connected
 const requireDB = async (_req, res, next) => {
   if (mongoose.connection.readyState === 1) return next();
