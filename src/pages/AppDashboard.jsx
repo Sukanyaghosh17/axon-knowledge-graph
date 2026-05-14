@@ -161,8 +161,16 @@ const AppDashboard = () => {
 
   useEffect(() => { loadNotes(); }, [loadNotes]);
 
-  const handleCreateNote = () => {
-    navigate('/app/edit');
+  const handleCreateNote = async () => {
+    setCreating(true);
+    try {
+      const res = await createNote({ title: 'Untitled Note', content: '', tags: [] });
+      navigate(`/app/edit?note=${res.data.data._id}`);
+    } catch (err) {
+      console.error('Failed to create note:', err);
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleOpenNote = (id) => navigate(`/app/edit?note=${id}`);
