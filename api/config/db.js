@@ -1,6 +1,15 @@
 const mongoose = require('mongoose');
 
+// Cache the connection promise across serverless invocations (Vercel re-uses warm instances)
+let cachedPromise = null;
+
 const connectDB = async () => {
+  // If already connected, reuse
+  if (mongoose.connection.readyState === 1) return;
+
+  // If a connection is in progress, wait for it
+  if (cachedPromise) return cachedPromise;
+
   try {
     let mongoUri = process.env.MONGO_URI;
 
@@ -26,11 +35,18 @@ const connectDB = async () => {
       console.log('✅ MongoDB Memory Server started');
     }
 
-    const conn = await mongoose.connect(mongoUri);
+    cachedPromise = mongoose.connect(mongoUri, {
+      // Recommended settings for serverless
+      bufferCommands: false,
+      maxPoolSize: 10,
+    });
+
+    const conn = await cachedPromise;
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
+    cachedPromise = null; // allow retry on next request
     console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    process.exit(1);
+    throw error;
   }
 };
 

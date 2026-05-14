@@ -1,14 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Hash, Send, Code, MessageSquare, Video, Users } from 'lucide-react';
 import './Contact.css';
 
 const Contact = () => {
+  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setError('Please fill in all fields.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    setSubmitting(true);
+    // Simulate async send (replace with real API call if backend is wired)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 900));
+      setSubmitted(true);
+      setForm({ name: '', email: '', message: '' });
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="contact-wrapper">
       <section className="contact-container fade-in">
         <div className="contact-left">
           <span className="contact-label">/ contact /</span>
-          <h2 className="contact-heading">We’re here to help you — anytime.</h2>
+          <h2 className="contact-heading">We're here to help you — anytime.</h2>
           
           <div className="contact-info">
             <div className="info-block">
@@ -41,13 +72,69 @@ const Contact = () => {
             <span className="contact-pin" role="img" aria-label="pin">📌</span>
             <h3>Get in Touch</h3>
             <p>Tell us your goals and how we can help you organize your ideas.</p>
-            
-            <form className="contact-form" onSubmit={(e) => e.preventDefault()}>
-              <input type="text" placeholder="Name" className="contact-input" />
-              <input type="email" placeholder="E-Mail" className="contact-input" />
-              <textarea placeholder="Message" className="contact-textarea"></textarea>
-              <button type="submit" className="contact-submit">Submit</button>
-            </form>
+
+            {submitted ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '32px 16px',
+                background: '#f0fdf4',
+                border: '1px solid #86efac',
+                borderRadius: '12px',
+                color: '#16a34a'
+              }}>
+                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>&#10003;</div>
+                <p style={{ fontWeight: 600, marginBottom: '4px' }}>Message sent!</p>
+                <p style={{ fontSize: '0.82rem', opacity: 0.8 }}>We’ll get back to you soon.</p>
+                <button
+                  onClick={() => setSubmitted(false)}
+                  style={{ marginTop: '16px', background: 'transparent', border: '1px solid #86efac', borderRadius: '8px', padding: '6px 16px', cursor: 'pointer', color: '#16a34a', fontSize: '0.8rem' }}
+                >
+                  Send another
+                </button>
+              </div>
+            ) : (
+              <form className="contact-form" onSubmit={handleSubmit} noValidate>
+                {error && (
+                  <p style={{ color: '#dc2626', fontSize: '0.78rem', marginBottom: '10px', background: '#fee2e2', padding: '8px 12px', borderRadius: '6px', border: '1px solid #fca5a5' }}>
+                    {error}
+                  </p>
+                )}
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Name"
+                  className="contact-input"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="E-Mail"
+                  className="contact-input"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+                <textarea
+                  name="message"
+                  placeholder="Message"
+                  className="contact-textarea"
+                  value={form.message}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="contact-submit"
+                  disabled={submitting}
+                  style={{ opacity: submitting ? 0.7 : 1, cursor: submitting ? 'not-allowed' : 'pointer' }}
+                >
+                  {submitting ? 'Sending…' : 'Submit'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </section>

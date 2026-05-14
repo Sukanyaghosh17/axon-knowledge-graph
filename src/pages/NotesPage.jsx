@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus, Search, FileText, Trash2, Clock, ArrowLeft,
   Save, Tag, X, Link2, RotateCcw, History,
@@ -95,9 +95,9 @@ const ToolbarDropdown = ({ trigger, children, className = '', title }) => {
   }, []);
   return (
     <div className={`tb-dropdown ${className}`} ref={ref}>
-      <button 
-        className="tb-dropdown-trigger" 
-        onClick={() => setOpen(p => !p)} 
+      <button
+        className="tb-dropdown-trigger"
+        onClick={() => setOpen(p => !p)}
         onMouseDown={(e) => e.preventDefault()}
         type="button"
         data-tooltip={title}
@@ -105,111 +105,97 @@ const ToolbarDropdown = ({ trigger, children, className = '', title }) => {
         {trigger}
         <ChevronDown size={10} className="tb-dropdown-arrow" />
       </button>
-      {open && <div className="tb-dropdown-menu" onClick={() => setOpen(false)}>{children}</div>}
+      {open && (
+        <div
+          className="tb-dropdown-menu"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setOpen(false)}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 };
 
 /* ── Rich Toolbar ────────────────────────────────────────── */
 const RichToolbar = ({ editorRef, font, setFont, fontSize, setFontSize, handleEditorInput }) => {
-  // Robust selection save using marker nodes
+  // Store selection as a cloned Range — no DOM mutation, survives focus changes
+  const savedRangeRef = useRef(null);
+
   const saveSelection = () => {
     const sel = window.getSelection();
-    if (!sel.rangeCount || !editorRef.current?.contains(sel.anchorNode)) return null;
-    
-    const range = sel.getRangeAt(0);
-    const startMarker = document.createElement('span');
-    startMarker.id = 'selection-marker-start';
-    startMarker.style.display = 'none';
-    const endMarker = document.createElement('span');
-    endMarker.id = 'selection-marker-end';
-    endMarker.style.display = 'none';
-
-    const rangeEnd = range.cloneRange();
-    rangeEnd.collapse(false);
-    rangeEnd.insertNode(endMarker);
-
-    const rangeStart = range.cloneRange();
-    rangeStart.collapse(true);
-    rangeStart.insertNode(startMarker);
-
-    return { startMarker, endMarker };
+    if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
   };
 
-  // Restore selection using markers and clean up
-  const restoreSelection = (markers) => {
-    if (!markers || !editorRef.current) {
-        editorRef.current?.focus();
-        return;
-    }
-    
-    const { startMarker, endMarker } = markers;
+  const restoreSelection = () => {
+    const range = savedRangeRef.current;
+    if (!range || !editorRef.current) { editorRef.current?.focus(); return; }
+    editorRef.current.focus();
     const sel = window.getSelection();
-    const range = document.createRange();
-
-    range.setStartAfter(startMarker);
-    range.setEndBefore(endMarker);
-
     sel.removeAllRanges();
     sel.addRange(range);
-    
-    startMarker.remove();
-    endMarker.remove();
-    editorRef.current.focus();
   };
 
+  // Save selection whenever user interacts with the editor
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    const onSelect = () => saveSelection();
+    el.addEventListener('mouseup', onSelect);
+    el.addEventListener('keyup', onSelect);
+    return () => {
+      el.removeEventListener('mouseup', onSelect);
+      el.removeEventListener('keyup', onSelect);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorRef]);
+
   const exec = (cmd, val = null) => {
-    const markers = saveSelection();
-    editorRef.current?.focus();
+    restoreSelection();
     document.execCommand(cmd, false, val);
-    restoreSelection(markers);
+    saveSelection();
   };
 
   const [activeBlock, setActiveBlock] = useState('Normal Text');
 
   const turnInto = (type, tag) => {
-    const markers = saveSelection();
+    restoreSelection();
     setActiveBlock(type);
-    editorRef.current?.focus();
     document.execCommand('formatBlock', false, `<${tag}>`);
-    if (tag === 'p') {
-      document.execCommand('removeFormat', false, null);
-    }
-    restoreSelection(markers);
+    if (tag === 'p') document.execCommand('removeFormat', false, null);
+    saveSelection();
   };
 
   const [activeColor, setActiveColor] = useState('inherit');
   const [activeHighlight, setActiveHighlight] = useState('transparent');
 
   const applyColor = (color) => {
-    const markers = saveSelection();
+    restoreSelection();
     setActiveColor(color);
-    editorRef.current?.focus();
     document.execCommand('foreColor', false, color === 'inherit' ? '#1C1917' : color);
-    restoreSelection(markers);
+    saveSelection();
   };
 
   const applyHighlight = (color) => {
-    const markers = saveSelection();
+    restoreSelection();
     setActiveHighlight(color);
-    editorRef.current?.focus();
     document.execCommand('hiliteColor', false, color === 'transparent' ? 'transparent' : color);
-    restoreSelection(markers);
+    saveSelection();
   };
 
   const applyFont = (f) => {
-    const markers = saveSelection();
+    restoreSelection();
     setFont(f);
-    if (editorRef.current) {
-        editorRef.current.style.fontFamily = FONT_MAP[f];
-    }
-    restoreSelection(markers);
+    if (editorRef.current) editorRef.current.style.fontFamily = FONT_MAP[f];
+    saveSelection();
   };
 
   const applyFontSize = (size) => {
-    const markers = saveSelection();
+    restoreSelection();
     setFontSize(size);
-    editorRef.current?.focus();
     document.execCommand('styleWithCSS', false, false);
     document.execCommand('fontSize', false, '7');
     const fontEls = editorRef.current?.querySelectorAll('font[size="7"]');
@@ -219,32 +205,36 @@ const RichToolbar = ({ editorRef, font, setFont, fontSize, setFontSize, handleEd
       span.innerHTML = el.innerHTML;
       el.parentNode.replaceChild(span, el);
     });
-    restoreSelection(markers);
+    saveSelection();
     handleEditorInput();
   };
 
   const insertLink = () => {
+    restoreSelection();
     const url = window.prompt('Enter URL:');
-    if (url) exec('createLink', url);
+    if (url) { document.execCommand('createLink', false, url); saveSelection(); }
   };
 
   const insertHr = () => {
-    editorRef.current?.focus();
+    restoreSelection();
     document.execCommand('insertHTML', false, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0"/>');
+    saveSelection();
   };
 
   const insertCodeBlock = () => {
-    editorRef.current?.focus();
+    restoreSelection();
     document.execCommand('insertHTML', false,
       '<pre style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-family:JetBrains Mono,monospace;font-size:0.85rem;margin:8px 0;white-space:pre-wrap"><code>code here</code></pre>'
     );
+    saveSelection();
   };
 
   const insertQuote = () => {
-    editorRef.current?.focus();
+    restoreSelection();
     document.execCommand('insertHTML', false,
       '<blockquote style="border-left:3px solid var(--accent);padding-left:16px;margin:8px 0;color:var(--text-muted);font-style:italic">Quote</blockquote>'
     );
+    saveSelection();
   };
 
   return (
@@ -468,6 +458,7 @@ const RichToolbar = ({ editorRef, font, setFont, fontSize, setFontSize, handleEd
               className={`tb-color-dot ${activeHighlight === c.value ? 'active' : ''}`}
               style={{ background: c.value, border: '1px solid var(--border-strong)' }}
               onClick={() => applyHighlight(c.value)}
+              onMouseDown={(e) => e.preventDefault()}
               title={c.label}
               type="button"
             />
@@ -580,7 +571,10 @@ const RichToolbar = ({ editorRef, font, setFont, fontSize, setFontSize, handleEd
 /* ── NotesPage ───────────────────────────────────────────── */
 const NotesPage = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { id: urlId } = useParams();
+
+  // Track the last opened id so the effect doesn't re-run when openNote reference changes
+  const openedIdRef = useRef(null);
 
   // ── Note list state ──
   const [notes, setNotes]               = useState([]);
@@ -601,7 +595,8 @@ const NotesPage = () => {
   const [extUrl, setExtUrl]           = useState('');
   const [saving, setSaving]             = useState(false);
   const [dirty, setDirty]               = useState(false);
-  const [editorLoading, setEditorLoading] = useState(false);
+  // Start in loading state if we already have a note ID in the URL so there's no empty-state flash
+  const [editorLoading, setEditorLoading] = useState(!!urlId);
 
   const [suggestedTags, setSuggestedTags] = useState(() => {
     try {
@@ -656,11 +651,14 @@ const NotesPage = () => {
 
   useEffect(() => { loadNotes(); }, [loadNotes]);
 
-  // Sync from URL ?note=
+  // Sync from URL params — runs when urlId changes (direct link, browser back/forward)
   useEffect(() => {
-    const id = searchParams.get('note');
-    if (id && id !== activeNoteId) openNote(id);
-  }, [searchParams]);
+    if (urlId && urlId !== openedIdRef.current) {
+      openedIdRef.current = urlId;
+      openNote(urlId);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlId]);
 
   /* ─── sync editor content → state ─────────────────────── */
   const handleEditorInput = () => {
@@ -670,9 +668,16 @@ const NotesPage = () => {
   };
 
   /* ─── open / load a note ───────────────────────────────── */
-  const openNote = async (id) => {
+  const openNote = useCallback(async (id) => {
+    if (!id) return;
+    openedIdRef.current = id;
     setActiveNoteId(id);
-    setSearchParams({ note: id });
+    // Only push a new history entry when switching between notes;
+    // use replace when the URL already has this id (direct load / same note)
+    const currentPath = window.location.pathname;
+    if (currentPath !== `/app/edit/${id}`) {
+      navigate(`/app/edit/${id}`);
+    }
     setEditorLoading(true);
     try {
       const [noteRes, linksRes, backRes, versRes] = await Promise.all([
@@ -691,24 +696,27 @@ const NotesPage = () => {
       setBacklinks(backRes.data.data || []);
       setVersions(versRes.data.data || []);
       setDirty(false);
-      // Inject HTML into contenteditable
-      if (editorRef.current) {
-        editorRef.current.innerHTML = n.content || '';
-      }
+      // Inject HTML into contenteditable (runs after re-render because editorLoading goes false)
     } catch (err) {
       console.error('Failed to load note:', err);
+      showToast('Failed to load note', 'error');
     } finally {
       setEditorLoading(false);
     }
-  };
+  // navigate is stable from react-router; showToast defined above
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
-  // When the editor mounts after loading, set its content
+  // Inject content into the contenteditable div after editorLoading flips false
   useEffect(() => {
-    if (!editorLoading && editorRef.current && activeNoteId) {
+    if (!editorLoading && editorRef.current && activeNoteId && content !== undefined) {
+      // Only overwrite DOM if it differs to avoid resetting cursor position
       if (editorRef.current.innerHTML !== content) {
-        editorRef.current.innerHTML = content;
+        editorRef.current.innerHTML = content || '';
       }
     }
+  // content changes after each keystroke — only sync when editorLoading toggles
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editorLoading]);
 
   /* ─── auto-save ────────────────────────────────────────── */
@@ -753,7 +761,7 @@ const NotesPage = () => {
           const res = await createNote({ title: safeTitle, content: htmlContent, tags, externalLinks });
           const newId = res.data.data._id;
           setActiveNoteId(newId);
-          setSearchParams({ note: newId });
+          navigate(`/app/edit/${newId}`, { replace: true });
           setContent(htmlContent);
           setTitle(safeTitle);
           setDirty(false);
@@ -775,7 +783,7 @@ const NotesPage = () => {
     } finally {
       setSaving(false);
     }
-  }, [activeNoteId, dirty, title, content, tags, loadNotes]);
+  }, [activeNoteId, dirty, title, content, tags, externalLinks, loadNotes, navigate]);
 
   useEffect(() => {
     if (!dirty || !activeNoteId) return;
@@ -824,7 +832,7 @@ const NotesPage = () => {
       if (activeNoteId === id) {
         setActiveNoteId(null);
         setActiveNote(null);
-        setSearchParams({});
+        navigate('/app/edit', { replace: true });
         setTitle(''); setContent(''); setTags([]);
         if (editorRef.current) editorRef.current.innerHTML = '';
       }

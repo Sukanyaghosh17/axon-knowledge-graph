@@ -2,13 +2,16 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const noteRoutes = require('./routes/noteRoutes');
 
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB — wrapped in try/catch so a DB failure returns 503 not a crash
+const dbReady = connectDB().catch((err) => {
+  console.error('DB init failed:', err.message);
+});
 
 const app = express();
 
@@ -46,13 +49,30 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(morgan('dev'));
 }
 
-// Routes
-app.use('/api/notes', noteRoutes);
-// Graph endpoint (mounted separately for clean URL)
-app.get('/api/graph', require('./controllers/noteController').getGraphData);
+// DB-ready gate: ensures API routes only run once MongoDB is connected
+const requireDB = async (_req, res, next) => {
+  if (mongoose.connection.readyState === 1) return next();
+  try {
+    await dbReady;
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Please try again shortly.' });
+    }
+    next();
+  } catch {
+    res.status(503).json({ success: false, message: 'Database unavailable. Please try again shortly.' });
+  }
+};
 
-// Health check
-app.get('/api/health', (_req, res) => res.json({ status: 'OK', app: 'Axon API' }));
+// Routes
+app.use('/api/notes', requireDB, noteRoutes);
+// Graph endpoint (mounted separately for clean URL)
+app.get('/api/graph', requireDB, require('./controllers/noteController').getGraphData);
+
+// Health check — includes real DB state
+app.get('/api/health', (_req, res) => {
+  const states = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+  res.json({ status: 'OK', app: 'Axon API', db: states[mongoose.connection.readyState] || 'unknown' });
+});
 
 // 404 handler
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));

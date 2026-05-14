@@ -7,10 +7,11 @@ import {
   Monitor, Palette, Info, ExternalLink, Save
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { createNote } from '../api';
 import './SettingsPage.css';
 
 /* ── Sidebar (shared) ─────────────────────────────────────── */
-const Sidebar = ({ navigate }) => {
+const Sidebar = ({ navigate, onCreateNote, creating }) => {
   const { theme, toggleTheme } = useTheme();
   const [foldersExpanded, setFoldersExpanded] = useState(true);
 
@@ -34,8 +35,13 @@ const Sidebar = ({ navigate }) => {
       </div>
 
       <div className="settings-sidebar-actions">
-        <button className="settings-action-btn settings-action-primary" onClick={() => navigate('/app/edit')}>
-          <Plus size={15} /><span>Create Note</span>
+        <button
+          className="settings-action-btn settings-action-primary"
+          onClick={onCreateNote}
+          disabled={creating}
+        >
+          <Plus size={15} />
+          <span>{creating ? 'Creating…' : 'Create Note'}</span>
         </button>
         <button className="settings-action-btn" onClick={() => navigate('/app')}>
           <Search size={15} /><span>Search</span>
@@ -186,7 +192,15 @@ const GeneralTab = ({ settings, setSettings }) => {
         </div>
 
         <div className="settings-actions-row">
-          <button className="settings-btn-danger">
+          <button
+            className="settings-btn-danger"
+            onClick={() => {
+              // Clear all local app state then go home
+              localStorage.removeItem('axon-user-settings');
+              localStorage.removeItem('axon-suggested-tags');
+              navigate('/');
+            }}
+          >
             <LogOut size={14} /> Log Out
           </button>
         </div>
@@ -278,6 +292,26 @@ const DEFAULT_SETTINGS = {
 const SettingsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('general');
+  const [creating, setCreating] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleCreateNote = async () => {
+    setCreating(true);
+    try {
+      const res = await createNote({ title: 'Untitled', content: '', tags: [] });
+      navigate(`/app/edit/${res.data.data._id}`);
+    } catch (err) {
+      showToast('Failed to create note', 'error');
+      console.error(err);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   // Load from localStorage or use defaults
   const [initialSettings, setInitialSettings] = useState(() => {
@@ -294,7 +328,7 @@ const SettingsPage = () => {
   const handleSave = () => {
     localStorage.setItem('axon-user-settings', JSON.stringify(currentSettings));
     setInitialSettings(currentSettings);
-    // Optionally navigate away or show toast
+    showToast('Settings saved ✓');
   };
 
   const handleCancel = () => {
@@ -304,7 +338,22 @@ const SettingsPage = () => {
 
   return (
     <div className="settings-root">
-      <Sidebar navigate={navigate} />
+      {/* Toast */}
+      {toast && (
+        <div
+          style={{
+            position: 'fixed', top: 20, right: 24, zIndex: 9999,
+            padding: '10px 18px', borderRadius: '8px', fontSize: '0.82rem',
+            background: toast.type === 'error' ? '#fee2e2' : '#dcfce7',
+            color: toast.type === 'error' ? '#dc2626' : '#16a34a',
+            border: `1px solid ${toast.type === 'error' ? '#fca5a5' : '#86efac'}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+          }}
+        >
+          {toast.msg}
+        </div>
+      )}
+      <Sidebar navigate={navigate} onCreateNote={handleCreateNote} creating={creating} />
 
       <main className="settings-main">
         <div className="settings-header">

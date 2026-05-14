@@ -36,6 +36,7 @@ const App = () => {
           <Route path="/app" element={<AppDashboard />} />
           {/* Editor — full-screen three-panel layout */}
           <Route path="/app/edit" element={<NotesPage />} />
+          <Route path="/app/edit/:id" element={<NotesPage />} />
           {/* Settings */}
           <Route path="/app/settings" element={<SettingsPage />} />
           <Route path="/planner" element={<DailyPlannerPage />} />

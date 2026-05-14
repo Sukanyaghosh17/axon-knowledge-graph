@@ -31,7 +31,7 @@ const Navbar = () => {
   };
 
   const handleSelect = (id) => {
-    navigate(`/?note=${id}`);
+    navigate(`/app/edit/${id}`);
     setQuery(''); setResults([]); setShowDropdown(false);
   };
 

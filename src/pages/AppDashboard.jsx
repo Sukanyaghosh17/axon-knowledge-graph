@@ -165,7 +165,7 @@ const AppDashboard = () => {
     setCreating(true);
     try {
       const res = await createNote({ title: 'Untitled Note', content: '', tags: [] });
-      navigate(`/app/edit?note=${res.data.data._id}`);
+      navigate(`/app/edit/${res.data.data._id}`);
     } catch (err) {
       console.error('Failed to create note:', err);
     } finally {
@@ -173,7 +173,7 @@ const AppDashboard = () => {
     }
   };
 
-  const handleOpenNote = (id) => navigate(`/app/edit?note=${id}`);
+  const handleOpenNote = (id) => navigate(`/app/edit/${id}`);
 
   const handleDeleteNote = async (id) => {
     if (!window.confirm('Are you sure you want to delete this note?')) return;
