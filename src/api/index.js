@@ -2,8 +2,9 @@ import axios from 'axios';
 
 // In production (Vercel), API is served from the same domain under /api
 // In development, Vite proxy forwards /api → localhost:5000/api
+const isDev = import.meta.env.DEV;
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: isDev ? (import.meta.env.VITE_API_URL || '/api') : '/api',
   withCredentials: true,
 });
 

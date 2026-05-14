@@ -816,6 +816,7 @@ const NotesPage = () => {
       openNote(id);
     } catch (err) {
       console.error('Create failed:', err);
+      alert('Failed to create note. Please try again.');
     } finally {
       setCreating(false);
     }

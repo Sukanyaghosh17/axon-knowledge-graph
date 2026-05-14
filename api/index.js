@@ -8,8 +8,8 @@ const noteRoutes = require('./routes/noteRoutes');
 
 dotenv.config();
 
-// Connect to MongoDB — wrapped in try/catch so a DB failure returns 503 not a crash
-const dbReady = connectDB().catch((err) => {
+// Initial connection attempt on cold start
+connectDB().catch((err) => {
   console.error('DB init failed:', err.message);
 });
 
@@ -53,12 +53,13 @@ if (process.env.NODE_ENV !== 'production') {
 const requireDB = async (_req, res, next) => {
   if (mongoose.connection.readyState === 1) return next();
   try {
-    await dbReady;
+    await connectDB(); // Re-attempts connection if lost or cachedPromise was null
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Please try again shortly.' });
     }
     next();
-  } catch {
+  } catch (err) {
+    console.error('requireDB failed:', err.message);
     res.status(503).json({ success: false, message: 'Database unavailable. Please try again shortly.' });
   }
 };
