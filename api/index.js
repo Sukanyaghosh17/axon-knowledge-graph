@@ -1,12 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const dotenv = require('dotenv');
+const path = require('path');
 const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const noteRoutes = require('./routes/noteRoutes');
 
-dotenv.config();
+// On Vercel, env vars are injected automatically — skip dotenv.
+// Locally, load api/.env using an absolute path so CWD doesn't matter.
+if (!process.env.VERCEL) {
+  require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+}
 
 // Initial connection attempt on cold start
 connectDB().catch((err) => {
